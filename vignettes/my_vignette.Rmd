@@ -1,0 +1,74 @@
+---
+title: "SVMFeature"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{SVMFeature}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+# SVMFeature
+
+This vignette provides a comprehensive overview of the functionalities offered by the `SVMFeature` package. The `SVMFeature` package is designed to facilitate support vector machine (SVM) feature selection in R.
+
+## Introduction
+
+Support vector machines are a popular machine learning algorithm used for classification and regression tasks. Feature selection is an essential step in building effective SVM models, as it helps to improve model performance by selecting the most relevant features.
+
+The `SVMFeature` package implements various methods for SVM feature selection, allowing users to preprocess their datasets and identify the most important features for their models.
+
+## Installation
+
+You can install the `SVMFeature` package from CRAN using the following command:
+
+```r
+install.packages("SVMFeature")
+```
+
+Alternatively, you can install the development version of the package from GitHub:
+
+```r
+devtools::install_github("username/SVMFeature")
+```
+
+## Usage
+
+To demonstrate the usage of the `SVMFeature` package, we will walk through a simple example of SVM feature selection.
+
+```r
+library(SVMFeature)
+
+# Load your dataset
+data <- read.csv("your_dataset.csv")
+
+# Perform SVM feature selection
+selected_features <- svm_feature_selection(data)
+
+# Print the selected features
+print(selected_features)
+```
+
+## Function Reference
+
+### `svm_feature_selection()`
+
+This function performs SVM feature selection on the input dataset and returns the selected features.
+
+#### Parameters
+
+- `data`: The input dataset.
+
+#### Returns
+
+A vector containing the indices of the selected features.
+
+## Conclusion
+
+In this vignette, we explored the `SVMFeature` package and demonstrated its usage for SVM feature selection. By selecting the most relevant features, users can improve the performance of their SVM models and achieve better classification or regression results.

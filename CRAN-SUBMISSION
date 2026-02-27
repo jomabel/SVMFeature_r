@@ -1,0 +1,16 @@
+This is the initial submission of the package SVMFeature to CRAN.
+
+The package provides a feature selection algorithm using support vector machines and multi-objective optimization. It includes complete documentation, vignettes, and unit tests.
+
+R CMD check results:
+0 ERRORs | 0 WARNINGs | 1 NOTE
+
+The NOTE is caused by the following message:
+> checking for future file timestamps ... NOTE
+> unable to verify current time
+
+This is a known issue on Windows platforms and does not reflect a problem with the package itself.
+
+We kindly ask you to ignore this NOTE.
+
+NEWS.md contains a summary of the changes and features for version 0.1.0.
