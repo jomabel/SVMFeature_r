@@ -60,7 +60,6 @@ to_dict <- function(solution) {
     EPS = if(!is.null(solution$objective) && length(solution$objective) >= 2) solution$objective[2] else NULL,
     MCPOS = if(!is.null(solution$objective) && length(solution$objective) >= 3) solution$objective[3] else NULL,
     MCNEG = if(!is.null(solution$objective) && length(solution$objective) >= 4) solution$objective[4] else NULL,
-    # COSTE = if(!is.null(solution$obj_coste)) solution$obj_coste else NULL,  # Descomentar si se usa
     DOMINATES_TO = if(!is.null(solution$dominates_list)) solution$dominates_list else NULL,
     DOMINATED_BY = if(!is.null(solution$list_dominated_by)) solution$list_dominated_by else NULL,
     SOL_DOM_BY = if(!is.null(solution$sol_dom_by)) solution$sol_dom_by else NULL,
@@ -284,7 +283,7 @@ calculate_epsilon_objective <- function(solution, data, output) {
     decision_scores <- c(decision_scores, f_x)
 
     # Ajustar por el término independiente y contar errores
-    # Si la clase es 1, la distancia se calcula con el plano b[1]
+    # Si la clase es 1, la distancia se calcula con el plano b[2]
     if (clazz == 1) {
       distance <- distance + solution$plane_term_b[[2]]
     } else {
@@ -377,91 +376,6 @@ calculate_metrics <- function(solution, y_true, y_pred, decision_scores){
 
   return(solution)
 }
-
-
-#' @title Method to Calculate the FP/FN Objective
-#'
-#' @description
-#'   This method calculates the FP/FN objective by evaluating misclassified points.
-#'
-#' @param solution Solution class object containing data and features for classification
-#' @param data A data.frame with the input features
-#' @param output A vector with class labels
-#'
-#' @return Solution class object with the FP/FN objective calculated
-#'
-#' @export
-calculate_misclassified_objective <- function(solution, data, output) {
-  # Inicializar contadores de clasificaciones malas
-  solution$objective[[3]] <- 0
-  solution$objective[[4]] <- 0
-
-  # Iterar sobre todos los datos para calcular la suma de errores
-  for (i in 1:nrow(data)) {
-    clazz <- data[i, output]
-    distance <- 0
-    denominator <- 0
-
-    # Calculamos la distancia del vector a los planos d= wx + b/||w||
-    for (index in seq_along(solution$features)) {
-      fea <- solution$features[[index]]
-      distance <- distance + solution$plane_coord[index] * data[i, fea]
-      denominator <- denominator + (solution$plane_coord[index] ** 2)
-    }
-
-    # Ajustar por el término independiente y contar errores
-    # Si la clase es 1, la distancia se calcula con el plano b[0]
-    if (clazz == 1) {
-      distance <- distance + solution$plane_term_b[[1]]
-    } else {
-      distance <- distance + solution$plane_term_b[[2]]
-    }
-
-    distance <- distance / denominator ** (1/2)
-
-    # Si b[0] < b[1], la clase 1 está por encima del plano y la clase -1 por debajo
-    if (solution$plane_term_b[[1]] < solution$plane_term_b[[2]]) {
-      # Si la clase es -1 y la distancia es positiva está mal clasificada
-      if (clazz == -1) {
-        if (distance > 0) {
-          solution$objective[[4]] <- solution$objective[[4]] + 1
-        }
-      }
-      # Si la clase es 1 y la distancia es negativa está mal clasificada
-      else {
-        if (distance < 0) {
-          solution$objective[[3]] <- solution$objective[[3]] + 1
-        }
-      }
-    }
-    # Si b[0] > b[1], la clase 1 está por encima del plano y la clase -1 por debajo
-    else {
-      # Si la clase es -1 y la distancia es negativa está mal clasificada
-      if (clazz == -1) {
-        if (distance < 0) {
-          solution$objective[[4]] <- solution$objective[[4]] + 1
-        }
-      }
-      # Si la clase es 1 y la distancia es positiva está mal clasificada
-      else {
-        if (distance > 0) {
-          solution$objective[[3]] <- solution$objective[[3]] + 1
-        }
-      }
-    }
-  }
-
-  return(solution)
-}
-
-# calcular_objetivo_costes <- function(solucion) {
-#   solucion$obj_coste <- 0
-#   for (feature in solucion$features) {
-#     solucion$obj_coste <- solucion$obj_coste + solucion$costs[feature]
-#   }
-#   return(solucion)
-# }
-
 
 
 #' @title Evaluate Solution

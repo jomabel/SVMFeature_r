@@ -19,7 +19,14 @@ library(dplyr)
 #' @param n_iter Numeric. The number of iterations (default: 10).
 #' @param max_time Numeric. The maximum execution time (default: 300 seconds).
 #' @param mode Character. "iters" for iteration-based execution, "time" for time-based execution.
-#' @param objective Character. "distance-epsilon", "confusion-matrix", "distance-epsilon-costs" or "confusion-matrix-costs"
+#' @param objective Character. "distance-epsilon" or "confusion-matrix".
+#' @param num_obj Numeric. Number of objectives (default: 2).
+#' @param clones Numeric. Number of clones (default: 0).
+#' @param p_mutation Numeric. Mutation probability (default: 0.7).
+#' @param p_mut_ind Numeric. Individual mutation probability (default: 0.4).
+#' @param p_mut_fea Numeric. Feature mutation probability (default: 0.4).
+#' @param p_mut_coord Numeric. Mutation coordinates probability (default: 0.2).
+#' @param mut_coord Numeric. Mutation coordinates (default: 0).
 #' @return An S3 object of class "SVMFeature".
 #' @export
 #'
@@ -27,7 +34,9 @@ library(dplyr)
 #' @importFrom magrittr %>%
 #' @importFrom dplyr group_by summarize n
 SVMFeature <- function(data, inputs, output, costs, pop_size, num_fea,
-                       n_iter = 10, max_time = 300, mode = "iters", objective="distance-epsilon") {
+                       n_iter = 10, max_time = 300, mode = "iters", objective="distance-epsilon",
+                       num_obj = 2, clones = 0, p_mutation = 0.7, p_mut_ind = 0.4,
+                       p_mut_fea = 0.4, p_mut_coord = 0.2, mut_coord = 0) {
 
   if (!is.data.frame(data)) stop('Error: "data" must be a data frame')
   if (!mode %in% c("iters", "time")) stop('Error: "mode" must be either "iters" or "time"')
@@ -67,8 +76,10 @@ SVMFeature <- function(data, inputs, output, costs, pop_size, num_fea,
     mode = mode,
     objective = objective,
     population = Population(pop_size = pop_size, num_features = num_fea,
-                            objective = objective),
-    best_population = NULL
+                            num_obj = num_obj, clones = clones, p_mutation = p_mutation,
+                            p_mut_ind = p_mut_ind, p_mut_fea = p_mut_fea,
+                            p_mut_coord = p_mut_coord, mut_coord = mut_coord,
+                            objective = objective)
   )
 
   class(object) <- "SVMFeature"
@@ -88,7 +99,6 @@ run.SVMFeature <- function(object) {
   object$population <- fnds(object$population)
   object <- update_df_solutions.SVMFeature(object)
 
-  #object$best_population <- object$population
   init_time <- Sys.time()
 
   run_iteration <- function() {
@@ -99,7 +109,6 @@ run.SVMFeature <- function(object) {
     reduced_population <- reduce_population(object$population)
     reduced_population <- fnds(reduced_population)
 
-    #object$population$solution_list <- reduced_population$solution_list
     object$population <- reduced_population
     object <- update_df_solutions.SVMFeature(object)
     fronts_count <- object$population$df_solutions %>% dplyr::group_by(FRONT) %>% dplyr::summarize(count = dplyr::n())

@@ -12,7 +12,8 @@ suppressPackageStartupMessages({
 })
 
 # ===== Funciones auxiliares =====
-simulate <- function(method, data_scaled, costs, population_size, input_cols, output_col, num_features, iter_type, iter_val) {
+simulate <- function(method, data_scaled, costs, population_size, input_cols, output_col, num_features, iter_type, iter_val,
+                     num_obj, clones, p_mutation, p_mut_ind, p_mut_fea, p_mut_coord, mut_coord) {
   cat(glue::glue("🚀 Running NSGA-II simulation with method: {method}, population size: {population_size}, number of features: {num_features}, iteration type: {iter_type}, and iteration value: {iter_val}", "\n"))
 
   obj <- SVMFeature(
@@ -25,7 +26,14 @@ simulate <- function(method, data_scaled, costs, population_size, input_cols, ou
     n_iter = iter_val,
     max_time = iter_val,
     mode = iter_type,
-    objective = method
+    objective = method,
+    num_obj = num_obj,
+    clones = clones,
+    p_mutation = p_mutation,
+    p_mut_ind = p_mut_ind,
+    p_mut_fea = p_mut_fea,
+    p_mut_coord = p_mut_coord,
+    mut_coord = mut_coord
   )
 
   result <- run.SVMFeature(obj)
@@ -62,7 +70,7 @@ save_results <- function(result, method, dataset_name, population_size, iter_typ
 args <- commandArgs(trailingOnly = TRUE)
 
 if (length(args) < 1) {
-  stop("Uso: Rscript main.R <dataset> [has_header yes/no] [has_index yes/no] [has_costs yes/no] [sep ,] [normalize yes/no] [method] [population_size] [num_features] [iter_type] [iter_val]")
+  stop("Uso: Rscript main.R <dataset> [has_header yes/no] [has_index yes/no] [has_costs yes/no] [sep ,] [normalize yes/no] [method] [population_size] [num_features] [iter_type] [iter_val] [num_obj] [clones] [p_mutation] [p_mut_ind] [p_mut_fea] [p_mut_coord] [mut_coord]")
 }
 
 dataset <- args[1]
@@ -76,6 +84,13 @@ population_size <- ifelse(length(args) >= 8, as.integer(args[8]), 10)
 num_features <- ifelse(length(args) >= 9, as.integer(args[9]), 5)
 iter_type <- ifelse(length(args) >= 10, args[10], "iters")
 iter_val <- ifelse(length(args) >= 11, as.integer(args[11]), 5)
+num_obj <- ifelse(length(args) >= 12, as.integer(args[12]), 2)
+clones <- ifelse(length(args) >= 13, as.integer(args[13]), 0)
+p_mutation <- ifelse(length(args) >= 14, as.numeric(args[14]), 0.7)
+p_mut_ind <- ifelse(length(args) >= 15, as.numeric(args[15]), 0.4)
+p_mut_fea <- ifelse(length(args) >= 16, as.numeric(args[16]), 0.4)
+p_mut_coord <- ifelse(length(args) >= 17, as.numeric(args[17]), 0.2)
+mut_coord <- ifelse(length(args) >= 18, as.numeric(args[18]), 0)
 
 # ====== Lectura del dataset ======
 cat("📂 Loading dataset...\n")
@@ -110,7 +125,8 @@ if (normalize) {
 devtools::load_all(".")
 
 # ===== Ejecución del algoritmo =====
-result <- simulate(method, data, costs, population_size, input_cols, output_col, num_features, iter_type, iter_val)
+result <- simulate(method, data, costs, population_size, input_cols, output_col, num_features, iter_type, iter_val,
+                   num_obj, clones, p_mutation, p_mut_ind, p_mut_fea, p_mut_coord, mut_coord)
 
 # ===== Guardar resultados =====
 dataset_name <- tools::file_path_sans_ext(basename(dataset))

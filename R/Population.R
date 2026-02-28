@@ -204,10 +204,6 @@ fnds <- function(population) {
         population$solution_list[[n]]$sol_dom_by <- population$solution_list[[n]]$sol_dom_by + 1
       }
     }
-    #if (population$solution_list[[i]]$sol_dom_by == 0) {
-    #  front$solutions <- c(front$solutions, i)
-    #  population$solution_list[[i]]$front <- 1
-    #}
   }
 
   # Asignar frente 1 a las soluciones no dominadas
@@ -402,7 +398,6 @@ select_best_offspring <- function(child1, child2) {
 #'
 #' @export
 new_population <- function(population, data, inputs, output, costs) {
-  #cat(sprintf("\nCreating new population by crossover from %d to %d....\n", population$pop_size, 2 * population$pop_size))
   i <- population$pop_size
 
   while (length(population$solution_list) < 2 * population$pop_size) {
@@ -536,8 +531,6 @@ reduce_population <- function(population) {
     front_solutions <- front_solutions[!sapply(front_solutions, is.null)]
     new_population$solution_list <- c(new_population$solution_list, front_solutions)
 
-    #cat(sprintf("FRONT %d: %d solutions\n", front_counter, length(new_population$solution_list)))
-
     front_counter <- front_counter + 1
   }
 
@@ -601,8 +594,7 @@ crowding_distance <- function(population, num_front) {
         for (j in 2:(num_sol_front - 1)) {
           increment <- (front_solutions[[j + 1]]$objective[[obj]] - front_solutions[[j - 1]]$objective[[obj]]) / (max_obj - min_obj)
           front_solutions[[j]]$crowding_distance <- front_solutions[[j]]$crowding_distance + increment
-          #cat(sprintf("\nC distance: %f\n", front_solutions[[j]]$crowding_distance) )
-        }
+          }
       }
     }
   }

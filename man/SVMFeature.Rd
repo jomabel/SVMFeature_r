@@ -14,7 +14,14 @@ SVMFeature(
   n_iter = 10,
   max_time = 300,
   mode = "iters",
-  objective = "distance-epsilon"
+  objective = "distance-epsilon",
+  num_obj = 2,
+  clones = 0,
+  p_mutation = 0.7,
+  p_mut_ind = 0.4,
+  p_mut_fea = 0.4,
+  p_mut_coord = 0.2,
+  mut_coord = 0
 )
 }
 \arguments{
@@ -36,7 +43,21 @@ SVMFeature(
 
 \item{mode}{Character. "iters" for iteration-based execution, "time" for time-based execution.}
 
-\item{objective}{Character. "distance-epsilon", "confusion-matrix", "distance-epsilon-costs" or "confusion-matrix-costs"}
+\item{objective}{Character. "distance-epsilon" or "confusion-matrix".}
+
+\item{num_obj}{Numeric. Number of objectives (default: 2).}
+
+\item{clones}{Numeric. Number of clones (default: 0).}
+
+\item{p_mutation}{Numeric. Mutation probability (default: 0.7).}
+
+\item{p_mut_ind}{Numeric. Individual mutation probability (default: 0.4).}
+
+\item{p_mut_fea}{Numeric. Feature mutation probability (default: 0.4).}
+
+\item{p_mut_coord}{Numeric. Mutation coordinates probability (default: 0.2).}
+
+\item{mut_coord}{Numeric. Mutation coordinates (default: 0).}
 }
 \value{
 An S3 object of class "SVMFeature".
