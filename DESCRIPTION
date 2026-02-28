@@ -2,7 +2,7 @@ Package: SVMFeature
 Type: Package
 Title: A Support Vector Machine (SVM) Package with Advanced Featurization
 Version: 0.1.0
-Author: Ángel de Lara [aut] (<adelara@alu.ucam.edu>), Daniel Valero Carreras [aut, cre] (<dvalero@ucam.edu>), Antonio Jesús Banegas Luna [aut] (<ajbanegas@ucam.edu>)
+Author: José Manuel Martínez Belando [aut] (<jmmartinez614@alu.ucam.edu>), Ángel de Lara [aut] (<adelara@alu.ucam.edu>), Daniel Valero Carreras [aut, cre] (<dvalero@ucam.edu>), Antonio Jesús Banegas Luna [aut] (<ajbanegas@ucam.edu>)
 Maintainer: Daniel Valero Carreras <dvalero@alu.ucam.edu>
 Description: The "SVMFeature" R package presents a comprehensive suite for Support Vector 
   Machine (SVM) modeling enhanced with advanced featurization capabilities. Alongside standard 
@@ -22,6 +22,11 @@ Imports:
     ggplot2,
     stats
 Authors@R: c(
+    person(given = "José Manuel",
+           family = "Martínez Belando",
+           role = "aut",
+           email = "jmmartinez614@alu.ucam.edu"),
+           comment = c(ORCID = "0009-0002-1999-3076")),
     person(given = "Ángel", 
            family = "de Lara", 
            role = "aut",

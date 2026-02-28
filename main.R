@@ -11,10 +11,10 @@ suppressPackageStartupMessages({
 
 })
 
-# ===== Funciones auxiliares =====
+# ===== Helper functions =====
 simulate <- function(method, data_scaled, costs, population_size, input_cols, output_col, num_features, iter_type, iter_val,
                      num_obj, clones, p_mutation, p_mut_ind, p_mut_fea, p_mut_coord, mut_coord) {
-  cat(glue::glue("🚀 Running NSGA-II simulation with method: {method}, population size: {population_size}, number of features: {num_features}, iteration type: {iter_type}, and iteration value: {iter_val}", "\n"))
+  message(glue::glue("🚀 Running NSGA-II simulation with method: {method}, population size: {population_size}, number of features: {num_features}, iteration type: {iter_type}, and iteration value: {iter_val}"))
 
   obj <- SVMFeature(
     data = data_scaled,
@@ -37,97 +37,72 @@ simulate <- function(method, data_scaled, costs, population_size, input_cols, ou
   )
 
   result <- run.SVMFeature(obj)
-  cat(glue::glue("✅ NSGA-II simulation completed with method: {method}"), "\n")
+  message(glue::glue("✅ NSGA-II simulation completed with method: {method}"))
   return(result)
 }
 
-save_results <- function(result, method, dataset_name, population_size, iter_type, iter_val) {
-  # Extraer resultados del frente de Pareto
-  pareto_front <- result$population$df_solutions %>% dplyr::filter(FRONT == 1)
+# ======= Parameter configuration =======
+dataset        <- "data/09Colon_p.txt"
+has_header     <- FALSE         # Set to TRUE if the file has a header
+has_index      <- TRUE          # Set to TRUE if the file has an index column
+has_costs      <- TRUE          # Set to TRUE if the dataset includes feature costs
+separator      <- ";"           # Delimiter (e.g., "," or ";")
+should_normalize <- TRUE        # Whether to normalize data
+method         <- "distance-epsilon" # "distance-epsilon" or "confusion-matrix"
+population_size <- 10
+num_features   <- 5
+iter_type      <- "iters"       # "iters" for iterations, "time" for seconds
+iter_val       <- 5             # Number of iterations or time limit in seconds
 
-  # Convertir columnas tipo lista a texto
-  pareto_front <- pareto_front %>%
-    dplyr::mutate(across(where(is.list), ~ sapply(., function(x) paste(x, collapse = ","))))
+# Advanced Population parameters
+num_obj        <- 2
+clones         <- 0
+p_mutation     <- 0.7
+p_mut_ind      <- 0.4
+p_mut_fea      <- 0.4
+p_mut_coord    <- 0.2
+mut_coord      <- 0
 
-  output_dir <- file.path("results", dataset_name, method)
-  if (!dir.exists(output_dir)) dir.create(output_dir, recursive = TRUE)
+# ====== Dataset loading ======
+message("Loading dataset...")
 
-  base_filename <- paste0(population_size, "_", iter_type, "_", iter_val, ".csv")
-  output_file <- file.path(output_dir, base_filename)
-
-  counter <- 1
-  while (file.exists(output_file)) {
-    output_file <- file.path(output_dir, paste0(population_size, "_", iter_type, "_", iter_val, "_", counter, ".csv"))
-    counter <- counter + 1
-  }
-
-  write.csv(pareto_front, output_file, row.names = FALSE)
-  cat(glue::glue("📁 Pareto front saved in: {output_file}\n"))
-}
-
-
-# ======= Configuración de argumentos =======
-args <- commandArgs(trailingOnly = TRUE)
-
-if (length(args) < 1) {
-  stop("Uso: Rscript main.R <dataset> [has_header yes/no] [has_index yes/no] [has_costs yes/no] [sep ,] [normalize yes/no] [method] [population_size] [num_features] [iter_type] [iter_val] [num_obj] [clones] [p_mutation] [p_mut_ind] [p_mut_fea] [p_mut_coord] [mut_coord]")
-}
-
-dataset <- args[1]
-has_header <- ifelse(length(args) >= 2, tolower(args[2]) %in% c("yes", "y"), FALSE)
-has_index <- ifelse(length(args) >= 3, tolower(args[3]) %in% c("yes", "y"), TRUE)
-has_costs <- ifelse(length(args) >= 4, tolower(args[4]) %in% c("yes", "y"), TRUE)
-separator <- ifelse(length(args) >= 5, args[5], ",")
-normalize <- ifelse(length(args) >= 6, tolower(args[6]) %in% c("yes", "y"), TRUE)
-method <- ifelse(length(args) >= 7, args[7], "distance-epsilon")
-population_size <- ifelse(length(args) >= 8, as.integer(args[8]), 10)
-num_features <- ifelse(length(args) >= 9, as.integer(args[9]), 5)
-iter_type <- ifelse(length(args) >= 10, args[10], "iters")
-iter_val <- ifelse(length(args) >= 11, as.integer(args[11]), 5)
-num_obj <- ifelse(length(args) >= 12, as.integer(args[12]), 2)
-clones <- ifelse(length(args) >= 13, as.integer(args[13]), 0)
-p_mutation <- ifelse(length(args) >= 14, as.numeric(args[14]), 0.7)
-p_mut_ind <- ifelse(length(args) >= 15, as.numeric(args[15]), 0.4)
-p_mut_fea <- ifelse(length(args) >= 16, as.numeric(args[16]), 0.4)
-p_mut_coord <- ifelse(length(args) >= 17, as.numeric(args[17]), 0.2)
-mut_coord <- ifelse(length(args) >= 18, as.numeric(args[18]), 0)
-
-# ====== Lectura del dataset ======
-cat("📂 Loading dataset...\n")
-
-header_opt <- if (has_header) TRUE else FALSE
-data <- read_delim(dataset, delim = separator, col_names = header_opt)
+data <- tryCatch({
+  read_delim(dataset, delim = separator, col_names = has_header)
+}, error = function(e) {
+  stop(glue::glue("Error loading dataset: {e$message}"))
+})
 
 if (has_index) {
   data <- data[,-1]
 }
 
-if (!has_header) {
-  num_cols <- ncol(data)
-  names(data) <- c("y", paste0("x", 1:(num_cols-1)))
+# ====== Data preparation ======
+output_col <- names(data)[ncol(data)]
+input_cols <- names(data)[-ncol(data)]
+
+# Cargar costes si existen
+costs <- if (has_costs) rep(0, length(input_cols)) else NULL
+
+# Normalización opcional
+if (should_normalize) {
+  # Normalization is handled internally by SVMFeature, but additional pre-processing can be done here if needed.
 }
 
-output_col <- names(data)[1]
-input_cols <- names(data)[-1]
+message(glue::glue("Dataset loaded: {nrow(data)} rows and {ncol(data)} columns"))
 
-if (has_costs) {
-  costs <- as.numeric(data[1, -1])
-  data <- data[-1, ]
-} else {
-  costs <- rep(0.0, length(input_cols))
-}
+# ====== Algorithm execution ======
+# Loading the library
+devtools::load_all(".") 
+library(SVMFeature)
+library(scales)
 
-if (normalize) {
-  data[input_cols] <- as.data.frame(lapply(data[input_cols], scales::rescale))
-}
-
-# ===== Carga del paquete SVMFeature =====
-devtools::load_all(".")
-
-# ===== Ejecución del algoritmo =====
+# ===== Simulation =====
 result <- simulate(method, data, costs, population_size, input_cols, output_col, num_features, iter_type, iter_val,
                    num_obj, clones, p_mutation, p_mut_ind, p_mut_fea, p_mut_coord, mut_coord)
 
-# ===== Guardar resultados =====
+# ===== Save results =====
 dataset_name <- tools::file_path_sans_ext(basename(dataset))
-save_results(result, method, dataset_name, population_size, iter_type, iter_val)
+save_results(result, dataset_name = dataset_name)
+
+# ===== Visualization =====
+plot(result)

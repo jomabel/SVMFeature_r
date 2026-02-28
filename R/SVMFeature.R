@@ -112,19 +112,18 @@ run.SVMFeature <- function(object) {
     object$population <- reduced_population
     object <- update_df_solutions.SVMFeature(object)
     fronts_count <- object$population$df_solutions %>% dplyr::group_by(FRONT) %>% dplyr::summarize(count = dplyr::n())
-    cat(sprintf("Number of solutions in front 1: %d\n", fronts_count$count[1]))
     return(object)
   }
 
   if (object$mode == "iters") {
     for (iter in seq_len(object$n_iter)) {
-      cat(sprintf("ITERATION %d: %f seconds\n", iter, as.numeric(difftime(Sys.time(), init_time, units = "secs"))))
+      message(sprintf("ITERATION %d: %f seconds", iter, as.numeric(difftime(Sys.time(), init_time, units = "secs"))))
       object <- run_iteration()
     }
   } else if (object$mode == "time") {
     i <- 0
     while (as.numeric(difftime(Sys.time(), init_time, units = "secs")) < object$max_time) {
-      cat(sprintf("ITERATION %d: %f seconds\n", i, as.numeric(difftime(Sys.time(), init_time, units = "secs"))))
+      message(sprintf("ITERATION %d: %f seconds", i, as.numeric(difftime(Sys.time(), init_time, units = "secs"))))
       object <- run_iteration()
       i <- i + 1
     }
@@ -134,45 +133,99 @@ run.SVMFeature <- function(object) {
 
   print_population(object$population)
 
-  # Plot the Pareto Front if solutions exist
-  if (!is.null(object$population$df_solutions)) {
-    front_population1 <- dplyr::filter(object$population$df_solutions, FRONT == 1)
+  return(object)
+}
 
-    if (nrow(front_population1) > 0) {
-      if (object$objective == "distance-epsilon") {
-        front_population1$DIST <- as.numeric(front_population1$DIST)
-        front_population1$EPS <- as.numeric(front_population1$EPS)
-
-        xaxis_label <- 'Distance'
-        yaxis_label <- 'Epsilon'
-
-        xvalues = front_population1$DIST
-        yvalues = front_population1$EPS
-
-      } else if (object$objective == "confusion-matrix") {
-        front_population1$MCPOS <- as.numeric(front_population1$MCPOS)
-        front_population1$MCNEG <- as.numeric(front_population1$MCNEG)
-
-        xaxis_label <- 'False Positives'
-        yaxis_label <- 'False Negatives'
-
-        xvalues = front_population1$MCPOS
-        yvalues = front_population1$MCNEG
-      }
-
-      plot <- ggplot2::ggplot(front_population1, ggplot2::aes(x = xvalues, y = yvalues)) +
-        ggplot2::geom_point(color = 'blue') +
-        ggplot2::labs(x = xaxis_label, y = yaxis_label, title = 'Non-Dominated Solutions') +
-        ggplot2::theme_minimal() +
-        ggplot2::theme(panel.grid.major = ggplot2::element_line(linewidth = 0.5, linetype = 'solid', colour = "gray"))
-
-      print(plot)
-    } else {
-      cat("There is no solution in front 1 to plot.\n")
-    }
+#' Plot the Pareto Front of an SVMFeature object
+#' @param x An object of class "SVMFeature".
+#' @param ... Additional arguments (not used).
+#' @importFrom ggplot2 ggplot aes geom_point labs theme_minimal element_line
+#' @export
+plot.SVMFeature <- function(x, ...) {
+  if (is.null(x$population$df_solutions)) {
+    message("No solutions to plot.")
+    return(NULL)
   }
 
-  return(object)
+  front_population1 <- dplyr::filter(x$population$df_solutions, FRONT == 1)
+
+  if (nrow(front_population1) == 0) {
+    message("There is no solution in front 1 to plot.")
+    return(NULL)
+  }
+
+  if (x$objective == "distance-epsilon") {
+    front_population1$DIST <- as.numeric(front_population1$DIST)
+    front_population1$EPS <- as.numeric(front_population1$EPS)
+
+    xaxis_label <- 'Distance'
+    yaxis_label <- 'Epsilon'
+    xvalues <- front_population1$DIST
+    yvalues <- front_population1$EPS
+
+  } else if (x$objective == "confusion-matrix") {
+    front_population1$MCPOS <- as.numeric(front_population1$MCPOS)
+    front_population1$MCNEG <- as.numeric(front_population1$MCNEG)
+
+    xaxis_label <- 'False Positives'
+    yaxis_label <- 'False Negatives'
+    xvalues <- front_population1$MCPOS
+    yvalues <- front_population1$MCNEG
+  } else {
+    message("Objective not supported for plotting.")
+    return(NULL)
+  }
+
+  p <- ggplot2::ggplot(front_population1, ggplot2::aes(x = xvalues, y = yvalues)) +
+    ggplot2::geom_point(color = 'blue') +
+    ggplot2::labs(x = xaxis_label, y = yaxis_label, title = 'Non-Dominated Solutions') +
+    ggplot2::theme_minimal() +
+    ggplot2::theme(panel.grid.major = ggplot2::element_line(linewidth = 0.5, linetype = 'solid', colour = "gray"))
+
+  print(p)
+  return(invisible(p))
+}
+
+#' Save the Pareto front results to a CSV file
+#' @param object An object of class "SVMFeature".
+#' @param output_dir Character. The directory to save the results (default: "results").
+#' @param dataset_name Character. The name of the dataset (default: "dataset").
+#' @importFrom dplyr filter mutate across
+#' @importFrom utils write.csv
+#' @export
+save_results <- function(object, output_dir = "results", dataset_name = "dataset") {
+  if (is.null(object$population$df_solutions)) {
+    stop("No solutions found in the object.")
+  }
+
+  # Extract results from the Pareto front
+  pareto_front <- object$population$df_solutions %>% dplyr::filter(FRONT == 1)
+
+  if (nrow(pareto_front) == 0) {
+    message("No solutions in front 1 to save.")
+    return(invisible(NULL))
+  }
+
+  # Convert list-type columns to text
+  pareto_front <- pareto_front %>%
+    dplyr::mutate(dplyr::across(where(is.list), ~ sapply(., function(x) paste(x, collapse = ","))))
+
+  final_output_dir <- file.path(output_dir, dataset_name, object$objective)
+  if (!dir.exists(final_output_dir)) dir.create(final_output_dir, recursive = TRUE)
+
+  iter_val <- if (object$mode == "iters") object$n_iter else object$max_time
+  base_filename <- paste0(object$pop_size, "_", object$mode, "_", iter_val, ".csv")
+  output_file <- file.path(final_output_dir, base_filename)
+
+  counter <- 1
+  while (file.exists(output_file)) {
+    output_file <- file.path(final_output_dir, paste0(object$pop_size, "_", object$mode, "_", iter_val, "_", counter, ".csv"))
+    counter <- counter + 1
+  }
+
+  utils::write.csv(pareto_front, output_file, row.names = FALSE)
+  message(sprintf("Pareto front saved in: %s", output_file))
+  return(invisible(output_file))
 }
 
 #' Update df_solutions for an SVMFeature object
