@@ -38,36 +38,107 @@ Alternatively, you can install the development version of the package from GitHu
 devtools::install_github("ajbanegas/SVMFeature")
 ```
 
-## Usage
+## Example Datasets
 
-To demonstrate the usage of the `SVMFeature` package, we will walk through a simple example of SVM feature selection.
+The package includes several datasets that follow a specific format: no headers, index column in the first position, and class labels in the second column (which becomes the first after index removal). Some datasets also include a cost row.
+
+Available datasets:
+- `09Colon_p.txt`: Colon cancer dataset.
+- `10Leukemia_p.txt`: Leukemia dataset.
+- `11_DLBCL_p.txt`: Diffuse Large B-Cell Lymphoma dataset.
+- `12Carcinoma_p.txt`: Prostate carcinoma dataset.
+- `14Arrythmia_p.txt`: Cardiac arrhythmia dataset.
+- `16Mfeat_p.txt`: Multi-feature digit dataset.
+
+## Basic Usage
+
+To demonstrate the usage, we will use the `09Colon_p.txt` dataset.
+
+### 1. Data Preprocessing
+
+The datasets require specific preprocessing steps to correctly identify features, labels, and costs.
 
 ```r
 library(SVMFeature)
+library(readr)
 
-# Load your dataset
-data <- read.csv("your_dataset.csv")
+# 1. Load the dataset (using 09Colon_p.txt as an example)
+# Note: In these datasets, the separator is usually ';' and there is no header.
+dataset_file <- "data/09Colon_p.txt"
+data <- as.data.frame(read_delim(dataset_file, delim = ";", col_names = FALSE, show_col_types = FALSE))
 
-# Perform SVM feature selection
-selected_features <- svm_feature_selection(data)
+# 2. Remove the index column (first column)
+data <- data[,-1]
 
-# Print the selected features
-print(selected_features)
+# 3. Standardize column names
+# y = class label, x1...xn = features
+num_cols <- ncol(data)
+names(data) <- c("y", paste0("x", 1:(num_cols-1)))
+
+# 4. Extract feature costs (first row contains costs for each feature)
+costs <- as.numeric(data[1, -1])
+data  <- data[-1, ] # Remove the cost row from training data
+
+# 5. Filter for binary classification labels (-1 and 1)
+data <- data[data$y %in% c(-1, 1), ]
 ```
 
-## Function Reference
+### 2. Running the NSGA-II Simulation
 
-### `svm_feature_selection()`
+Once the data is prepared, we define the inputs and target, and run the optimization.
 
-This function performs SVM feature selection on the input dataset and returns the selected features.
+```r
+# Define input and output column names
+input_cols <- names(data)[-1]
+output_col <- names(data)[1]
 
-#### Parameters
+# Initialize SVMFeature object
+# You can choose between different optimization objectives:
+# - "distance-epsilon": Maximizes margin and minimizes error (default).
+# - "confusion-matrix": Minimizes False Positives and False Negatives.
+# - "distance-epsilon-costs" / "confusion-matrix-costs": Includes feature cost optimization.
 
-- `data`: The input dataset.
+obj <- SVMFeature(
+  data = data,
+  inputs = input_cols,
+  output = output_col,
+  costs = costs,
+  pop_size = 10,
+  num_fea = 5,
+  n_iter = 10,
+  mode = "iters",
+  objective = "distance-epsilon",
+  # Advanced parameters (optional, shown here with defaults)
+  num_obj = 2,
+  clones = 0,
+  p_mutation = 0.7,
+  p_mut_ind = 0.4,
+  p_mut_fea = 0.4,
+  p_mut_coord = 0.2,
+  mut_coord = 0
+)
 
-#### Returns
+# Execute optimization
+result <- run.SVMFeature(obj)
+```
 
-A vector containing the indices of the selected features.
+### 3. Visualization
+
+You can visualize the resulting Pareto front using the `draw_solution` function.
+
+```r
+# Plot the first front of solutions
+draw_solution(result)
+```
+
+### 4. Exporting Results
+
+The Pareto front solutions can be saved to a CSV file.
+
+```r
+# Export non-dominated solutions
+save_results(result, dataset_name = "09Colon_p")
+```
 
 ## Conclusion
 

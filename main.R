@@ -1,20 +1,18 @@
 #!/usr/bin/env Rscript
 
 suppressPackageStartupMessages({
-  #library(devtools)
   library(dplyr)
   library(readr)
   library(ggplot2)
   library(glue)
   library(scales)
   library(tools)
-
 })
 
 # ===== Helper functions =====
 simulate <- function(method, data_scaled, costs, population_size, input_cols, output_col, num_features, iter_type, iter_val,
                      num_obj, clones, p_mutation, p_mut_ind, p_mut_fea, p_mut_coord, mut_coord) {
-  message(glue::glue("🚀 Running NSGA-II simulation with method: {method}, population size: {population_size}, number of features: {num_features}, iteration type: {iter_type}, and iteration value: {iter_val}"))
+  message(glue::glue("Running NSGA-II simulation with method: {method}, population size: {population_size}, number of features: {num_features}, iteration type: {iter_type}, and iteration value: {iter_val}"))
 
   obj <- SVMFeature(
     data = data_scaled,
@@ -37,72 +35,89 @@ simulate <- function(method, data_scaled, costs, population_size, input_cols, ou
   )
 
   result <- run.SVMFeature(obj)
-  message(glue::glue("✅ NSGA-II simulation completed with method: {method}"))
+  message(glue::glue("NSGA-II simulation completed with method: {method}"))
   return(result)
 }
 
 # ======= Parameter configuration =======
-dataset        <- "data/09Colon_p.txt"
-has_header     <- FALSE         # Set to TRUE if the file has a header
-has_index      <- TRUE          # Set to TRUE if the file has an index column
-has_costs      <- TRUE          # Set to TRUE if the dataset includes feature costs
-separator      <- ";"           # Delimiter (e.g., "," or ";")
-should_normalize <- TRUE        # Whether to normalize data
-method         <- "distance-epsilon" # "distance-epsilon" or "confusion-matrix"
+dataset         <- "data/09Colon_p.txt"
+has_header      <- FALSE
+has_index       <- TRUE
+has_costs       <- TRUE
+separator       <- ";"
+method          <- "distance-epsilon"
 population_size <- 10
-num_features   <- 5
-iter_type      <- "iters"       # "iters" for iterations, "time" for seconds
-iter_val       <- 5             # Number of iterations or time limit in seconds
+num_features    <- 5
+iter_type       <- "iters"
+iter_val        <- 5
 
-# Advanced Population parameters
-num_obj        <- 2
-clones         <- 0
-p_mutation     <- 0.7
-p_mut_ind      <- 0.4
-p_mut_fea      <- 0.4
-p_mut_coord    <- 0.2
-mut_coord      <- 0
+# Advanced Population parameters (using library defaults)
+num_obj         <- 2
+clones          <- 0
+p_mutation      <- 0.7
+p_mut_ind       <- 0.4
+p_mut_fea       <- 0.4
+p_mut_coord     <- 0.2
+mut_coord       <- 0
 
-# ====== Dataset loading ======
+# ====== Dataset loading and preprocessing ======
+# These steps are essential to prepare raw data for the SVMFeature library.
 message("Loading dataset...")
 
 data <- tryCatch({
-  read_delim(dataset, delim = separator, col_names = has_header)
+  # read_delim is used for flexibility with large bioinformatics datasets.
+  # show_col_types = FALSE silences the automatic column type detection message.
+  df <- read_delim(dataset, delim = separator, col_names = has_header, show_col_types = FALSE)
+  as.data.frame(df) # The library expects a standard data.frame, not a tibble.
 }, error = function(e) {
   stop(glue::glue("Error loading dataset: {e$message}"))
 })
 
+# 1. Remove index column if present (it doesn't provide predictive value)
 if (has_index) {
   data <- data[,-1]
 }
 
-# ====== Data preparation ======
-output_col <- names(data)[ncol(data)]
-input_cols <- names(data)[-ncol(data)]
-
-# Cargar costes si existen
-costs <- if (has_costs) rep(0, length(input_cols)) else NULL
-
-# Normalización opcional
-if (should_normalize) {
-  # Normalization is handled internally by SVMFeature, but additional pre-processing can be done here if needed.
+# 2. Standardize column names if the file has no header.
+# We assume the first column is the target (y) and the rest are features (x1, x2...).
+if (!has_header) {
+  num_cols <- ncol(data)
+  names(data) <- c("y", paste0("x", 1:(num_cols-1)))
 }
 
-message(glue::glue("Dataset loaded: {nrow(data)} rows and {ncol(data)} columns"))
+output_col <- names(data)[1]
+input_cols <- names(data)[-1]
 
-# ====== Algorithm execution ======
-# Loading the library
-devtools::load_all(".") 
+# 3. Handle feature costs.
+# In many datasets, the first row (after headers) contains the acquisition cost for each feature.
+if (has_costs) {
+  costs <- as.numeric(data[1, -1])
+  data  <- data[-1, ] # Remove the cost row from the training data
+} else {
+  costs <- rep(0.0, length(input_cols)) # Use 0 costs if none are provided
+}
+
+# 4. Binary Classification target check.
+# The current SVM implementation requires binary labels (e.g., -1 and 1).
+# We filter the dataset to ensure only these two classes are present.
+data <- data[data[[output_col]] %in% c(-1, 1), ]
+
+message(glue::glue("Dataset prepared: {nrow(data)} rows and {ncol(data)} columns"))
+
+# ===== Load SVMFeature package =====
+# load_all() is used during development to simulate loading the installed package.
+devtools::load_all(".")
 library(SVMFeature)
-library(scales)
 
-# ===== Simulation =====
+# ===== Algorithm execution =====
+# The simulate() helper function wraps the SVMFeature object creation and run.SVMFeature() call.
 result <- simulate(method, data, costs, population_size, input_cols, output_col, num_features, iter_type, iter_val,
                    num_obj, clones, p_mutation, p_mut_ind, p_mut_fea, p_mut_coord, mut_coord)
 
-# ===== Save results =====
+# ===== Result Export and Visualization =====
+# save_results() exports the Pareto front to a CSV file in the 'results/' directory.
 dataset_name <- tools::file_path_sans_ext(basename(dataset))
 save_results(result, dataset_name = dataset_name)
 
-# ===== Visualization =====
-plot(result)
+# draw_solution() provides a visual representation of the Pareto front using ggplot2.
+draw_solution(result)
