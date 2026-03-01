@@ -136,12 +136,12 @@ run.SVMFeature <- function(object) {
   return(object)
 }
 
-#' Plot the Pareto Front of an SVMFeature object
+#' Draw the Pareto Front of an SVMFeature object
 #' @param x An object of class "SVMFeature".
 #' @param ... Additional arguments (not used).
 #' @importFrom ggplot2 ggplot aes geom_point labs theme_minimal element_line
 #' @export
-plot.SVMFeature <- function(x, ...) {
+draw_solution <- function(x, ...) {
   if (is.null(x$population$df_solutions)) {
     message("No solutions to plot.")
     return(NULL)
