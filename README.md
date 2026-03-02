@@ -10,9 +10,8 @@ The result of the algorithm is a **Pareto front**, where each solution is an SVM
 
 - ⚙️ **NSGA-II Metaheuristic**: Robust multi-objective genetic algorithm.
 - 📈 **Optimization Objectives**:
-  - Classic: Margin distance and Epsilon (error).
-  - Classification: False Positives (FP) and False Negatives (FN).
-- 🧬 **Feature Selection**: Integrated selection to handle high-dimensional data.
+  - Margin distance and Epsilon (error).
+  - False Positives (FP) and False Negatives (FN).
 - 🔍 **Visualization**: Built-in `draw_solution()` to inspect the Pareto front.
 - 📤 **Data Export**: Save optimal solutions directly to CSV.
 
