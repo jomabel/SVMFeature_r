@@ -117,7 +117,7 @@ result <- simulate(method, data, costs, population_size, input_cols, output_col,
 # ===== Result Export and Visualization =====
 # save_results() exports the Pareto front to a CSV file in the 'results/' directory.
 dataset_name <- tools::file_path_sans_ext(basename(dataset))
-save_results(result, dataset_name = dataset_name)
+save_results(result, "results", dataset_name = dataset_name)
 
 # draw_solution() provides a visual representation of the Pareto front using ggplot2.
 draw_solution(result)

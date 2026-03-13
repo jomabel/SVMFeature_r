@@ -1,8 +1,4 @@
-  library(caret)
-  library(Metrics)
-  library(psych) # For cohen.kappa
-
-#' @title Definition of the Solution Class
+  #' @title Definition of the Solution Class
 #'
 #' @description
 #'   Defines the `Solution` class, which represents an individual solution.
@@ -14,6 +10,9 @@
 #' @return Object of the `Solution` class
 #'
 #' @export
+#'
+#' @examples
+#' sol <- Solution(num = 1, num_features = 2, obj = "distance-epsilon")
 Solution <- function(num, num_features, obj) {
   # Define instance variables
   solution <- list(
@@ -49,6 +48,10 @@ Solution <- function(num, num_features, obj) {
 #' @return List with the information of the solution
 #'
 #' @export
+#'
+#' @examples
+#' sol <- Solution(num = 1, num_features = 2, obj = "distance-epsilon")
+#' sol_dict <- to_dict(sol)
 to_dict <- function(solution) {
   return(list(
     SOL = if(!is.null(solution$num)) solution$num else NULL,
@@ -88,6 +91,11 @@ to_dict <- function(solution) {
 #'
 #' @return Index of the random class vector
 #' @export
+#'
+#' @examples
+#' data <- data.frame(y = c(-1, 1, 1, -1))
+#' sol <- Solution(num = 1, num_features = 2, obj = "distance-epsilon")
+#' idx <- get_class_vector(sol, clazz = 1, data = data, output = "y")
 get_class_vector <- function(solution, clazz, data, output) {
   indices <- which(data[[output]] == clazz)
   if (length(indices) > 0) {
@@ -114,6 +122,11 @@ get_class_vector <- function(solution, clazz, data, output) {
 #' @return Solution class object with a randomly generated solution
 #'
 #' @export
+#'
+#' @examples
+#' data <- data.frame(x1 = rnorm(4), x2 = rnorm(4), y = c(-1, 1, 1, -1))
+#' sol <- Solution(num = 1, num_features = 2, obj = "distance-epsilon")
+#' sol <- generate_random_solution(sol, data, c("x1", "x2"), "y")
 generate_random_solution <- function(solution, data, inputs, output) {
   # Select two points from class A and B
   classes <- sort(unique(data[[output]]))
@@ -163,6 +176,12 @@ generate_random_solution <- function(solution, data, inputs, output) {
 #' @return Solution class object with constructed planes
 #'
 #' @export
+#'
+#' @examples
+#' data <- data.frame(x1 = rnorm(4), x2 = rnorm(4), y = c(-1, 1, 1, -1))
+#' sol <- Solution(num = 1, num_features = 2, obj = "distance-epsilon")
+#' sol <- generate_random_solution(sol, data, c("x1", "x2"), "y")
+#' sol <- construct_planes(sol, data)
 construct_planes <- function(solution, data) {
   # Prepare data_sol dataframe by selecting only necessary rows and columns
   valid_indices <- unlist(solution$vectors)
@@ -217,6 +236,13 @@ construct_planes <- function(solution, data) {
 #' @return Solution class object with the distance objective calculated
 #'
 #' @export
+#'
+#' @examples
+#' data <- data.frame(x1 = rnorm(4), x2 = rnorm(4), y = c(-1, 1, 1, -1))
+#' sol <- Solution(num = 1, num_features = 2, obj = "distance-epsilon")
+#' sol <- generate_random_solution(sol, data, c("x1", "x2"), "y")
+#' sol <- construct_planes(sol, data)
+#' sol <- calculate_distance_objective(sol)
 calculate_distance_objective <- function(solution) {
   # Initialize the distance objective to zero
   solution$objective[[1]] <- 0
@@ -246,6 +272,13 @@ calculate_distance_objective <- function(solution) {
 #' @return Solution class object with the epsilon objective calculated
 #'
 #' @export
+#'
+#' @examples
+#' data <- data.frame(x1 = rnorm(4), x2 = rnorm(4), y = c(-1, 1, 1, -1))
+#' sol <- Solution(num = 1, num_features = 2, obj = "distance-epsilon")
+#' sol <- generate_random_solution(sol, data, c("x1", "x2"), "y")
+#' sol <- construct_planes(sol, data)
+#' sol <- calculate_epsilon_objective(sol, data, "y")
 calculate_epsilon_objective <- function(solution, data, output) {
   # Initialize misclassification counters
   solution$objective[[2]] <- 0
@@ -327,7 +360,7 @@ calculate_epsilon_objective <- function(solution, data, output) {
       }
     }
   }
-  solution <- calculate_metrics(solution, y_true, y_pred, decision_scores)
+  solution <- SVMFeature::calculate_metrics(solution, y_true, y_pred, decision_scores)
   return(solution)
 }
 
@@ -354,6 +387,13 @@ calculate_epsilon_objective <- function(solution, data, output) {
 #'   \item{auc}{Area Under the ROC Curve (AUC)}
 #'
 #' @export
+#'
+#' @examples
+#' sol <- Solution(num = 1, num_features = 2, obj = "distance-epsilon")
+#' y_true <- c(-1, 1, 1, -1)
+#' y_pred <- c(-1, 1, -1, -1)
+#' scores <- c(-0.5, 0.8, -0.1, -0.9)
+#' sol <- SVMFeature::calculate_metrics(sol, y_true, y_pred, scores)
 calculate_metrics <- function(solution, y_true, y_pred, decision_scores){
   y_true_bin <- ifelse(y_true == 1, 1, 0)
   y_pred_bin <- ifelse(y_pred == 1, 1, 0)
@@ -362,17 +402,17 @@ calculate_metrics <- function(solution, y_true, y_pred, decision_scores){
                                 factor(y_pred, levels=c(-1,1)))
 
   # Accuracy
-  solution$accuracy <- accuracy(y_true_bin, y_pred_bin)
+  solution$accuracy <- Metrics::accuracy(y_true_bin, y_pred_bin)
   # Precision, Recall, F1 (for positive class = 1)
   solution$precision <- Metrics::precision(y_true_bin, y_pred_bin)
   solution$recall <- Metrics::recall(y_true_bin, y_pred_bin)
   solution$f1 <- ifelse(is.na(solution$precision) | is.na(solution$recall), 0, 2 * solution$precision * solution$recall / (solution$precision + solution$recall))
 
   # Cohen Kappa
-  solution$kappa <- cohen.kappa(solution$conf_matrix)$kappa
+  solution$kappa <- psych::cohen.kappa(solution$conf_matrix)$kappa
 
   # AUC
-  solution$auc <- auc(y_true_bin, decision_scores)
+  solution$auc <- Metrics::auc(y_true_bin, decision_scores)
 
   return(solution)
 }
@@ -390,6 +430,12 @@ calculate_metrics <- function(solution, y_true, y_pred, decision_scores){
 #' @return Solution class object with updated evaluation status and objectives
 #'
 #' @export
+#'
+#' @examples
+#' data <- data.frame(x1 = rnorm(4), x2 = rnorm(4), y = c(-1, 1, 1, -1))
+#' sol <- Solution(num = 1, num_features = 2, obj = "distance-epsilon")
+#' sol <- generate_random_solution(sol, data, c("x1", "x2"), "y")
+#' sol <- evaluate_solution(sol, data, "y")
 evaluate_solution <- function(solution, data, output) {
   # Verify if the sum of plane_coord is zero
   if (sum(solution$plane_coord) == 0) {
@@ -400,9 +446,8 @@ evaluate_solution <- function(solution, data, output) {
     # Procedures to evaluate the solution if there are valid coordinates
     solution <- construct_planes(solution, data)
 
-    solution <- calculate_distance_objective(solution)
-    solution <- calculate_epsilon_objective(solution, data, output)
-    #solution <- calculate_misclassified_objective(solution, data, output)
+    solution <- SVMFeature::calculate_distance_objective(solution)
+    solution <- SVMFeature::calculate_epsilon_objective(solution, data, output)
 
 
     # Assume evaluations were successful if this point is reached
@@ -421,9 +466,16 @@ evaluate_solution <- function(solution, data, output) {
 #' @param solution1 First solution object
 #' @param solution2 Second solution object
 #'
-#' @return TRUE if solucion1 dominates solucion2, otherwise FALSE
+#' @return TRUE if solution1 dominates solution2, otherwise FALSE
 #'
 #' @export
+#'
+#' @examples
+#' sol1 <- Solution(num = 1, num_features = 2, obj = "distance-epsilon")
+#' sol1$objective <- c(1, 0, 0, 0)
+#' sol2 <- Solution(num = 2, num_features = 2, obj = "distance-epsilon")
+#' sol2$objective <- c(0, 1, 1, 1)
+#' dominate(sol1, sol2)
 dominate <- function(solution1, solution2) {
   if (!is_valid_solution(solution1) || !is_valid_solution(solution2)) {
     # Return FALSE or handle the case as per your application logic
@@ -456,6 +508,11 @@ dominate <- function(solution1, solution2) {
 #' @return TRUE if solution is valid, otherwise FALSE
 #'
 #' @export
+#'
+#' @examples
+#' sol <- Solution(num = 1, num_features = 2, obj = "distance-epsilon")
+#' sol$objective <- c(1, 0, 0, 0)
+#' is_valid_solution(sol)
 is_valid_solution <- function(solution) {
   if (solution$obj_fn == 'distance-epsilon') {
     if (is.na(solution$objective[[1]]) || !is.numeric(solution$objective[[1]]) ||
@@ -483,9 +540,16 @@ is_valid_solution <- function(solution) {
 #' @param solution1 First solution object
 #' @param solution2 Second solution object
 #'
-#' @return 0 if the solutions are equal, 1 if solucion1 dominates solucion2, 2 if solucion2 dominates solucion1
+#' @return 0 if the solutions are equal, 1 if solution1 dominates solution2, 2 if solution2 dominates solution1
 #'
 #' @export
+#'
+#' @examples
+#' sol1 <- Solution(num = 1, num_features = 2, obj = "distance-epsilon")
+#' sol1$objective <- c(1, 0, 0, 0)
+#' sol2 <- Solution(num = 2, num_features = 2, obj = "distance-epsilon")
+#' sol2$objective <- c(0, 1, 1, 1)
+#' dominate2(sol1, sol2)
 dominate2 <- function(solution1, solution2) {
   if (solution1$obj_fn == 'distance-epsilon') {
 
@@ -525,6 +589,13 @@ dominate2 <- function(solution1, solution2) {
 #' @return The solution object with better dominance or front
 #'
 #' @export
+#'
+#' @examples
+#' sol1 <- Solution(num = 1, num_features = 2, obj = "distance-epsilon")
+#' sol1$front <- 1
+#' sol2 <- Solution(num = 2, num_features = 2, obj = "distance-epsilon")
+#' sol2$front <- 2
+#' compare_solutions(sol1, sol2)
 compare_solutions <- function(solution1, solution2) {
   if (solution1$front == solution2$front) {
     if (length(solution1$list_dominated_by) == length(solution2$list_dominated_by)) {
@@ -562,6 +633,12 @@ compare_solutions <- function(solution1, solution2) {
 #' @return Solution class object with updated vectors
 #'
 #' @export
+#'
+#' @examples
+#' data <- data.frame(x1 = rnorm(4), x2 = rnorm(4), y = c(-1, 1, 1, -1))
+#' sol <- Solution(num = 1, num_features = 2, obj = "distance-epsilon")
+#' sol <- generate_random_solution(sol, data, c("x1", "x2"), "y")
+#' sol <- mutate_vectors(sol, data, "y")
 mutate_vectors <- function(solution, data, output) {
   # Get unique classes and sort them
   classes <- sort(unique(data[[output]]))

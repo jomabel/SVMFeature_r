@@ -17,6 +17,9 @@
 #' @return Object of the `Population` class
 #'
 #' @export
+#'
+#' @examples
+#' pop <- Population(pop_size = 10, num_features = 3, objective = "distance-epsilon")
 Population <- function(pop_size, num_features, num_obj = 2, clones = 0, p_mutation = 0.7,
                        p_mut_ind = 0.4, p_mut_fea = 0.4, p_mut_coord = 0.2, mut_coord = 0,
                        objective = "distance-epsilon")
@@ -59,6 +62,15 @@ Population <- function(pop_size, num_features, num_obj = 2, clones = 0, p_mutati
 #' @return Population class object updated with the generated initial population
 #'
 #' @export
+#'
+#' @examples
+#' set.seed(42)
+#' data <- data.frame(
+#'   x1 = rnorm(20), x2 = rnorm(20),
+#'   y = sample(c(-1, 1), 20, replace = TRUE)
+#' )
+#' pop <- Population(pop_size = 2, num_features = 2, objective = "distance-epsilon")
+#' pop <- generate_initial_population(pop, data, c("x1", "x2"), "y", c(1, 1))
 generate_initial_population <- function(population, data, inputs, output, costs) {
   message(sprintf("Creating initial population of size %d", population$pop_size))
   num_sol <- 0
@@ -98,6 +110,17 @@ generate_initial_population <- function(population, data, inputs, output, costs)
 #' @return Prints the population in the console
 #'
 #' @export
+#'
+#' @examples
+#' set.seed(42)
+#' data <- data.frame(
+#'   x1 = rnorm(20), x2 = rnorm(20),
+#'   y = sample(c(-1, 1), 20, replace = TRUE)
+#' )
+#' pop <- Population(pop_size = 2, num_features = 2, objective = "distance-epsilon")
+#' pop <- generate_initial_population(pop, data, c("x1", "x2"), "y", c(1, 1))
+#' pop <- fnds(pop)
+#' print_population(pop)
 print_population <- function(population) {
   # Convert the list of solutions to a data frame
   df_solutions <- do.call(rbind, lapply(population$solution_list, function(solution) {
@@ -134,6 +157,17 @@ print_population <- function(population) {
 #' @return 1 if a clone is found, otherwise 0
 #'
 #' @export
+#'
+#' @examples
+#' set.seed(42)
+#' data <- data.frame(
+#'   x1 = rnorm(20), x2 = rnorm(20),
+#'   y = sample(c(-1, 1), 20, replace = TRUE)
+#' )
+#' pop <- Population(pop_size = 2, num_features = 2, objective = "distance-epsilon")
+#' pop <- generate_initial_population(pop, data, c("x1", "x2"), "y", c(1, 1))
+#' sol <- pop$solution_list[[1]]
+#' clone_res <- check_clones(pop, sol)
 check_clones <- function(population, solution_eva) {
   clone <- 0
   for (sol in population$solution_list) {
@@ -177,6 +211,16 @@ check_clones <- function(population, solution_eva) {
 #' @return Updated Population class object with sorted fronts
 #'
 #' @export
+#'
+#' @examples
+#' set.seed(42)
+#' data <- data.frame(
+#'   x1 = rnorm(20), x2 = rnorm(20),
+#'   y = sample(c(-1, 1), 20, replace = TRUE)
+#' )
+#' pop <- Population(pop_size = 2, num_features = 2, objective = "distance-epsilon")
+#' pop <- generate_initial_population(pop, data, c("x1", "x2"), "y", c(1, 1))
+#' pop <- fnds(pop)
 fnds <- function(population) {
   pop_size <- length(population$solution_list)
   fronts <- list()
@@ -250,6 +294,17 @@ fnds <- function(population) {
 #' @return Selected parent solution
 #'
 #' @export
+#'
+#' @examples
+#' set.seed(42)
+#' data <- data.frame(
+#'   x1 = rnorm(20), x2 = rnorm(20),
+#'   y = sample(c(-1, 1), 20, replace = TRUE)
+#' )
+#' pop <- Population(pop_size = 4, num_features = 2, objective = "distance-epsilon")
+#' pop <- generate_initial_population(pop, data, c("x1", "x2"), "y", c(1, 1))
+#' pop <- fnds(pop)
+#' parent <- tournament_select_parent(pop)
 tournament_select_parent <- function(population) {
   # Randomly select two candidates
   num1 <- sample(seq_len(population$pop_size), 1)
@@ -288,6 +343,19 @@ tournament_select_parent <- function(population) {
 #' @return List of two new offspring solutions
 #'
 #' @export
+#'
+#' @examples
+#' set.seed(42)
+#' data <- data.frame(
+#'   x1 = rnorm(20), x2 = rnorm(20),
+#'   y = sample(c(-1, 1), 20, replace = TRUE)
+#' )
+#' pop <- Population(pop_size = 4, num_features = 2, objective = "distance-epsilon")
+#' pop <- generate_initial_population(pop, data, c("x1", "x2"), "y", c(1, 1))
+#' pop <- fnds(pop)
+#' parent1 <- tournament_select_parent(pop)
+#' parent2 <- tournament_select_parent(pop)
+#' offspring <- crossover_solutions(pop, parent1, parent2, 5, data, "y", c(1, 1))
 crossover_solutions <- function(population, parent, mother, num, data, output, costs) {
   # Create four offspring solutions using crossover from the parents
   # First child: father's features and coordinates, father's first vector and mother's second vector
@@ -360,11 +428,18 @@ crossover_solutions <- function(population, parent, mother, num, data, output, c
 #' @param child1 The first offspring to compare.
 #' @param child2 The second offspring to compare.
 #'
-#' @return List[Solution, Solution]
+#' @return List[Solution][Solution]
 #'   A list with two solutions, where the first one is the better offspring (the winner), and the second one
 #'   is the inferior offspring (the loser).
 #'
 #' @export
+#'
+#' @examples
+#' sol1 <- Solution(num = 1, num_features = 2, obj = "distance-epsilon")
+#' sol1$objective <- c(1, 0, 0, 0)
+#' sol2 <- Solution(num = 2, num_features = 2, obj = "distance-epsilon")
+#' sol2$objective <- c(0, 1, 1, 1)
+#' best_offspring <- select_best_offspring(sol1, sol2)
 select_best_offspring <- function(child1, child2) {
   dominates <- dominate2(child1, child2)
   if (dominates == 1) {        # child1 dominates child2
@@ -397,6 +472,17 @@ select_best_offspring <- function(child1, child2) {
 #' @return Updated Population class object with the new population generated
 #'
 #' @export
+#'
+#' @examples
+#' set.seed(42)
+#' data <- data.frame(
+#'   x1 = rnorm(20), x2 = rnorm(20),
+#'   y = sample(c(-1, 1), 20, replace = TRUE)
+#' )
+#' pop <- Population(pop_size = 2, num_features = 2, objective = "distance-epsilon")
+#' pop <- generate_initial_population(pop, data, c("x1", "x2"), "y", c(1, 1))
+#' pop <- fnds(pop)
+#' pop_new <- new_population(pop, data, c("x1", "x2"), "y", c(1, 1))
 new_population <- function(population, data, inputs, output, costs) {
   i <- population$pop_size
 
@@ -454,6 +540,17 @@ new_population <- function(population, data, inputs, output, costs) {
 #' @return Mutated solution object
 #'
 #' @export
+#'
+#' @examples
+#' data <- data.frame(
+#'   x1 = c(1, 2, 1, 5, 6, 7),
+#'   x2 = c(1, 1, 2, 6, 5, 6),
+#'   y = c(-1, -1, -1, 1, 1, 1)
+#' )
+#' pop <- Population(pop_size = 2, num_features = 2, objective = "distance-epsilon")
+#' sol <- Solution(num = 1, num_features = 2, obj = "distance-epsilon")
+#' sol <- generate_random_solution(sol, data, c("x1", "x2"), "y")
+#' mut_sol <- mutate_solution(sol, pop, data, c("x1", "x2"), "y")
 mutate_solution <- function(solution, population, data, inputs, output) {
   random <- runif(1)
 
@@ -513,8 +610,23 @@ mutate_solution <- function(solution, population, data, inputs, output) {
 #' @return Reduced Population class object
 #'
 #' @export
+#'
+#' @examples
+#' set.seed(42)
+#' data <- data.frame(
+#'   x1 = rnorm(20), x2 = rnorm(20),
+#'   y = sample(c(-1, 1), 20, replace = TRUE)
+#' )
+#' pop <- Population(pop_size = 5, num_features = 2, objective = "distance-epsilon")
+#' pop <- generate_initial_population(pop, data, c("x1", "x2"), "y", c(1, 1))
+#' pop <- fnds(pop)
+#' # Create a larger population to reduce
+#' pop <- new_population(pop, data, c("x1", "x2"), "y", c(1, 1))
+#' pop <- fnds(pop)
+#' pop_reduced <- reduce_population(pop)
 reduce_population <- function(population) {
   # Create new empty population
+  cat("Creating new population with", population$num_fea, "features\n")
   new_population <- Population(pop_size = population$pop_size,
                                num_features = population$num_fea,
                                objective = population$objective)
@@ -563,6 +675,17 @@ reduce_population <- function(population) {
 #' @return List of solutions with updated crowding distances
 #'
 #' @export
+#'
+#' @examples
+#' set.seed(42)
+#' data <- data.frame(
+#'   x1 = rnorm(20), x2 = rnorm(20),
+#'   y = sample(c(-1, 1), 20, replace = TRUE)
+#' )
+#' pop <- Population(pop_size = 4, num_features = 2, objective = "distance-epsilon")
+#' pop <- generate_initial_population(pop, data, c("x1", "x2"), "y", c(1, 1))
+#' pop <- fnds(pop)
+#' crowd_sols <- crowding_distance(pop, num_front = 1)
 crowding_distance <- function(population, num_front) {
   # Extract solutions from the specified front
   front_solutions <- lapply(population$solution_list, function(sol) {
