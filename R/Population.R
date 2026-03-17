@@ -3,9 +3,9 @@
 #' @description
 #'   This function defines the `Population` class with its attributes and methods.
 #'
-#' @param pop_size Population size
-#' @param num_features Number of features
-#' @param num_obj Number of objective (default: 2)
+#' @param pop_size Maximum population size
+#' @param num_features Number of features selected
+#' @param num_obj Number of objective (default: 2) //Este parámetro no debería estar es esta versión del algoritmo//
 #' @param clones Number of clones (default: 0)
 #' @param p_mutation Mutation probability (default: 0.7)
 #' @param p_mut_ind Individual mutation probability (default: 0.4)
@@ -57,7 +57,7 @@ Population <- function(pop_size, num_features, num_obj = 2, clones = 0, p_mutati
 #' @param data A data.frame with the input features
 #' @param inputs A vector of input features
 #' @param output A vector with class labels
-#' @param costs A vector with feature costs
+#' @param costs A vector with feature costs //Esto no debería estar en este algoritmo//
 #'
 #' @return Population class object updated with the generated initial population
 #'
@@ -84,8 +84,8 @@ generate_initial_population <- function(population, data, inputs, output, costs)
     # Check if the solution was successfully evaluated
     if (sol$successful_evaluation) {
       # Additional clone check if necessary
-      if (population$clones == 1 || check_clones(population, sol) == 0) { # TODO clones siempre vale 0
-        # Añadir la solución evaluada y actualizada a la población
+      if (population$clones == 1 || check_clones(population, sol) == 0) { # TODO clones siempre vale 0 <- comprobar cuando clones vale 1
+        # Add the evaluated and updated solution to the population
         population$solution_list[[num_sol + 1]] <- sol
         num_sol <- num_sol + 1
       } else {
@@ -336,7 +336,7 @@ tournament_select_parent <- function(population) {
 #' @param num Unique identifier for the new solutions
 #' @param data A data.frame with the input features
 #' @param output A vector with class labels
-#' @param costs A vector with feature costs
+#' @param costs A vector with feature costs //¿Lo quitamos?
 #'
 #' @importFrom stats runif
 #'
@@ -465,7 +465,7 @@ select_best_offspring <- function(child1, child2) {
 #' @param data A data.frame with the input features
 #' @param inputs A vector of input features
 #' @param output A vector with class labels
-#' @param costs A vector with feature costs
+#' @param costs A vector with feature costs //¿Lo quitamos?
 #'
 #' @importFrom stats runif
 #'
