@@ -1,25 +1,19 @@
-Package: SVMFeature
+Package: svmfsmeta
 Type: Package
-Title: A Support Vector Machine (SVM) Package with Advanced Featurization
+Language: en-US
+Title: Multiobjective SVM feature selection via metaheuristics
 Version: 0.1.0
-Author: José Manuel Martínez Belando [aut] (<jmmartinez614@alu.ucam.edu>), Ángel de Lara [aut] (<adelara@alu.ucam.edu>), Daniel Valero Carreras [aut, cre] (<dvalero@ucam.edu>), Antonio Jesús Banegas Luna [aut] (<ajbanegas@ucam.edu>)
-Maintainer: Daniel Valero Carreras <dvalero@alu.ucam.edu>
-Description: The "SVMFeature" R package presents a comprehensive suite for Support Vector 
-  Machine (SVM) modeling enhanced with advanced featurization capabilities. Alongside standard 
-  SVM functionalities, it introduces a cutting-edge genetic algorithm tailored for 
-  multi-objective optimization tasks. This genetic algorithm utilizes a combination of techniques, 
-  including initial population creation, fast non-dominated sorting, tournament dominance 
-  selection, crossover, mutation, and elitism. By integrating these techniques, "SVMFeature" 
-  facilitates efficient optimization of SVM models while overcoming common challenges like 
-  overfitting. For detailed insights into the algorithm and usage guidelines, please consult 
-  the vignette.
+Description: Solves the bi-objective soft-margin support vector machine (SVM) with feature selection (FS) problem. Implements a metaheuristic based on the Non-dominated Sorting Genetic Algorithm II (NSGA-II) for Pareto frontier approximation, together with tools for model assessment and visualization. Methods implemented in the package are described in Alcaraz (2024) <doi:10.1016/j.cor.2024.106821> and Valero-Carreras et al. (2023) <doi:10.1016/j.cor.2022.106131>.
 License: AGPL (>= 3)
 Encoding: UTF-8
 RoxygenNote: 7.3.2
 Imports:
     dplyr,
-    magrittr,
     ggplot2,
+    magrittr,
+    Metrics,
+    pROC,
+    psych,
     stats
 Authors@R: c(
     person(given = "José Manuel",
@@ -40,11 +34,11 @@ Authors@R: c(
     person(given = "Antonio Jesús", 
            family = "Banegas Luna", 
            role = "aut",
-           email = "ajbanegas@ucam.edu",
+           email = "antonioj.banegas@cud.upct.es",
            comment = c(ORCID = "0000-0003-1158-8877"))
            )
-URL: https://github.com/ajbanegas/SVMFeature
-BugReports: https://github.com/ajbanegas/SVMFeature/issues
+URL: https://github.com/jomabel/SVMFeature_r
+BugReports: https://github.com/jomabel/SVMFeature_r/issues
 Suggests: 
     knitr,
     rmarkdown,
@@ -54,3 +48,4 @@ Config/testthat/edition: 3
 Depends: 
     R (>= 2.10)
 Roxygen: list(markdown = TRUE)
+
