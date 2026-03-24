@@ -382,7 +382,7 @@ crossover_solutions <- function(population, parent, mother, num, data, output, c
   child3$plane_coord <- mother$plane_coord
   child3$vectors <- list(mother$vectors[[1]], parent$vectors[[2]])
 
-  # Evaluate the offspring solutions
+  # Evaluate the offspring solutions  //Esto en el código original no se hace. No sé si mantenerlo o cambiarlo
   child <- evaluate_solution(child, data, output)
   child1 <- evaluate_solution(child1, data, output)
   child2 <- evaluate_solution(child2, data, output)
