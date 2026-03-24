@@ -61,7 +61,7 @@ SVMFeature <- function(data, inputs, output, costs, pop_size, num_fea,
          "distance-epsilon-costs", "confusion-matrix" or
          "confusion-matrix-costs"')
 
-  # Normalization function
+  # Normalization function  <- ¿Esto debería ser obligatorio?
   scaler <- function(x) {
     rng <- range(x, na.rm = TRUE)
     if (rng[1] == rng[2]) return(rep(0.5, length(x)))
