@@ -84,7 +84,7 @@ generate_initial_population <- function(population, data, inputs, output, costs)
     # Check if the solution was successfully evaluated
     if (sol$successful_evaluation) {
       # Additional clone check if necessary
-      if (population$clones == 1 || check_clones(population, sol) == 0) { # TODO clones siempre vale 0 <- comprobar cuando clones vale 1
+      if (population$clones == 1 || check_clones(population, sol) == 0) {
         # Add the evaluated and updated solution to the population
         population$solution_list[[num_sol + 1]] <- sol
         num_sol <- num_sol + 1
@@ -382,7 +382,7 @@ crossover_solutions <- function(population, parent, mother, num, data, output, c
   child3$plane_coord <- mother$plane_coord
   child3$vectors <- list(mother$vectors[[1]], parent$vectors[[2]])
 
-  # Evaluate the offspring solutions  //Esto en el código original no se hace. No sé si mantenerlo o cambiarlo
+  # Evaluate the offspring solutions 
   child <- evaluate_solution(child, data, output)
   child1 <- evaluate_solution(child1, data, output)
   child2 <- evaluate_solution(child2, data, output)
