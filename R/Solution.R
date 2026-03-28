@@ -12,7 +12,7 @@
 #' @export
 #'
 #' @examples
-#' sol <- Solution(num = 1, num_features = 2, obj = "distance-epsilon")
+#' sol <- Solution(num = 1, num_features = 2, obj = "DIST-EPS")
 Solution <- function(num, num_features, obj) {
   # Define instance variables
   solution <- list(
@@ -50,7 +50,7 @@ Solution <- function(num, num_features, obj) {
 #' @export
 #'
 #' @examples
-#' sol <- Solution(num = 1, num_features = 2, obj = "distance-epsilon")
+#' sol <- Solution(num = 1, num_features = 2, obj = "DIST-EPS")
 #' sol_dict <- to_dict(sol)
 to_dict <- function(solution) {
   return(list(
@@ -94,7 +94,7 @@ to_dict <- function(solution) {
 #'
 #' @examples
 #' data <- data.frame(y = c(-1, 1, 1, -1))
-#' sol <- Solution(num = 1, num_features = 2, obj = "distance-epsilon")
+#' sol <- Solution(num = 1, num_features = 2, obj = "DIST-EPS")
 #' idx <- get_class_vector(sol, clazz = 1, data = data, output = "y")
 get_class_vector <- function(solution, clazz, data, output) {
   indices <- which(data[[output]] == clazz)
@@ -125,7 +125,7 @@ get_class_vector <- function(solution, clazz, data, output) {
 #'
 #' @examples
 #' data <- data.frame(x1 = rnorm(4), x2 = rnorm(4), y = c(-1, 1, 1, -1))
-#' sol <- Solution(num = 1, num_features = 2, obj = "distance-epsilon")
+#' sol <- Solution(num = 1, num_features = 2, obj = "DIST-EPS")
 #' sol <- generate_random_solution(sol, data, c("x1", "x2"), "y")
 generate_random_solution <- function(solution, data, inputs, output) {
   # Select two points from class A and B
@@ -179,7 +179,7 @@ generate_random_solution <- function(solution, data, inputs, output) {
 #'
 #' @examples
 #' data <- data.frame(x1 = rnorm(4), x2 = rnorm(4), y = c(-1, 1, 1, -1))
-#' sol <- Solution(num = 1, num_features = 2, obj = "distance-epsilon")
+#' sol <- Solution(num = 1, num_features = 2, obj = "DIST-EPS")
 #' sol <- generate_random_solution(sol, data, c("x1", "x2"), "y")
 #' sol <- construct_planes(sol, data)
 construct_planes <- function(solution, data) {
@@ -239,7 +239,7 @@ construct_planes <- function(solution, data) {
 #'
 #' @examples
 #' data <- data.frame(x1 = rnorm(4), x2 = rnorm(4), y = c(-1, 1, 1, -1))
-#' sol <- Solution(num = 1, num_features = 2, obj = "distance-epsilon")
+#' sol <- Solution(num = 1, num_features = 2, obj = "DIST-EPS")
 #' sol <- generate_random_solution(sol, data, c("x1", "x2"), "y")
 #' sol <- construct_planes(sol, data)
 #' sol <- calculate_distance_objective(sol)
@@ -275,7 +275,7 @@ calculate_distance_objective <- function(solution) {
 #'
 #' @examples
 #' data <- data.frame(x1 = rnorm(4), x2 = rnorm(4), y = c(-1, 1, 1, -1))
-#' sol <- Solution(num = 1, num_features = 2, obj = "distance-epsilon")
+#' sol <- Solution(num = 1, num_features = 2, obj = "DIST-EPS")
 #' sol <- generate_random_solution(sol, data, c("x1", "x2"), "y")
 #' sol <- construct_planes(sol, data)
 #' sol <- calculate_epsilon_objective(sol, data, "y")
@@ -360,7 +360,7 @@ calculate_epsilon_objective <- function(solution, data, output) {
       }
     }
   }
-  solution <- SVMFeature::calculate_metrics(solution, y_true, y_pred, decision_scores)
+  solution <- svm_fs_meta::calculate_metrics(solution, y_true, y_pred, decision_scores)
   return(solution)
 }
 
@@ -389,11 +389,11 @@ calculate_epsilon_objective <- function(solution, data, output) {
 #' @export
 #'
 #' @examples
-#' sol <- Solution(num = 1, num_features = 2, obj = "distance-epsilon")
+#' sol <- Solution(num = 1, num_features = 2, obj = "DIST-EPS")
 #' y_true <- c(-1, 1, 1, -1)
 #' y_pred <- c(-1, 1, -1, -1)
 #' scores <- c(-0.5, 0.8, -0.1, -0.9)
-#' sol <- SVMFeature::calculate_metrics(sol, y_true, y_pred, scores)
+#' sol <- svm_fs_meta::calculate_metrics(sol, y_true, y_pred, scores)
 calculate_metrics <- function(solution, y_true, y_pred, decision_scores){
   y_true_bin <- ifelse(y_true == 1, 1, 0)
   y_pred_bin <- ifelse(y_pred == 1, 1, 0)
@@ -433,7 +433,7 @@ calculate_metrics <- function(solution, y_true, y_pred, decision_scores){
 #'
 #' @examples
 #' data <- data.frame(x1 = rnorm(4), x2 = rnorm(4), y = c(-1, 1, 1, -1))
-#' sol <- Solution(num = 1, num_features = 2, obj = "distance-epsilon")
+#' sol <- Solution(num = 1, num_features = 2, obj = "DIST-EPS")
 #' sol <- generate_random_solution(sol, data, c("x1", "x2"), "y")
 #' sol <- evaluate_solution(sol, data, "y")
 evaluate_solution <- function(solution, data, output) {
@@ -446,8 +446,8 @@ evaluate_solution <- function(solution, data, output) {
     # Procedures to evaluate the solution if there are valid coordinates
     solution <- construct_planes(solution, data)
 
-    solution <- SVMFeature::calculate_distance_objective(solution)
-    solution <- SVMFeature::calculate_epsilon_objective(solution, data, output)
+    solution <- svm_fs_meta::calculate_distance_objective(solution)
+    solution <- svm_fs_meta::calculate_epsilon_objective(solution, data, output)
 
 
     # Assume evaluations were successful if this point is reached
@@ -471,9 +471,9 @@ evaluate_solution <- function(solution, data, output) {
 #' @export
 #'
 #' @examples
-#' sol1 <- Solution(num = 1, num_features = 2, obj = "distance-epsilon")
+#' sol1 <- Solution(num = 1, num_features = 2, obj = "DIST-EPS")
 #' sol1$objective <- c(1, 0, 0, 0)
-#' sol2 <- Solution(num = 2, num_features = 2, obj = "distance-epsilon")
+#' sol2 <- Solution(num = 2, num_features = 2, obj = "DIST-EPS")
 #' sol2$objective <- c(0, 1, 1, 1)
 #' dominate(sol1, sol2)
 dominate <- function(solution1, solution2) {
@@ -484,11 +484,11 @@ dominate <- function(solution1, solution2) {
   }
 
   # Proceed with comparison if all values are suitable
-  if (solution1$obj_fn == 'distance-epsilon') {
+  if (solution1$obj_fn == 'DIST-EPS') {
     return(solution1$objective[[1]] >= solution2$objective[[1]] &&
              solution1$objective[[2]] <= solution2$objective[[2]])
 
-  } else if (solution1$obj_fn == 'confusion-matrix') {
+  } else if (solution1$obj_fn == 'MC') {
     return(solution1$objective[[3]] <= solution2$objective[[3]] &&
              solution1$objective[[4]] <= solution2$objective[[4]])
   }else{
@@ -510,16 +510,16 @@ dominate <- function(solution1, solution2) {
 #' @export
 #'
 #' @examples
-#' sol <- Solution(num = 1, num_features = 2, obj = "distance-epsilon")
+#' sol <- Solution(num = 1, num_features = 2, obj = "DIST-EPS")
 #' sol$objective <- c(1, 0, 0, 0)
 #' is_valid_solution(sol)
 is_valid_solution <- function(solution) {
-  if (solution$obj_fn == 'distance-epsilon') {
+  if (solution$obj_fn == 'DIST-EPS') {
     if (is.na(solution$objective[[1]]) || !is.numeric(solution$objective[[1]]) ||
         is.na(solution$objective[[2]]) || !is.numeric(solution$objective[[2]])) {
       return(FALSE)
     }
-  } else if (solution$obj_fn == 'confusion-matrix') {
+  } else if (solution$obj_fn == 'MC') {
     if (is.na(solution$objective[[3]]) || !is.numeric(solution$objective[[3]]) ||
         is.na(solution$objective[[4]]) || !is.numeric(solution$objective[[4]])) {
       return(FALSE)
@@ -545,13 +545,13 @@ is_valid_solution <- function(solution) {
 #' @export
 #'
 #' @examples
-#' sol1 <- Solution(num = 1, num_features = 2, obj = "distance-epsilon")
+#' sol1 <- Solution(num = 1, num_features = 2, obj = "DIST-EPS")
 #' sol1$objective <- c(1, 0, 0, 0)
-#' sol2 <- Solution(num = 2, num_features = 2, obj = "distance-epsilon")
+#' sol2 <- Solution(num = 2, num_features = 2, obj = "DIST-EPS")
 #' sol2$objective <- c(0, 1, 1, 1)
 #' dominate2(sol1, sol2)
 dominate2 <- function(solution1, solution2) {
-  if (solution1$obj_fn == 'distance-epsilon') {
+  if (solution1$obj_fn == 'DIST-EPS') {
 
     # Check if objectives are equal
     if (solution1$objective[[1]] == solution2$objective[[1]] &&
@@ -563,7 +563,7 @@ dominate2 <- function(solution1, solution2) {
     } else {
       return(2)  # solution2 dominates solution1
     }
-  } else if (solution1$obj_fn == 'confusion-matrix') {
+  } else if (solution1$obj_fn == 'MC') {
     # Check if objectives are equal
     if (solution1$objective[[3]] == solution2$objective[[3]] &&
         solution1$objective[[4]] == solution2$objective[[4]]) {
@@ -591,9 +591,9 @@ dominate2 <- function(solution1, solution2) {
 #' @export
 #'
 #' @examples
-#' sol1 <- Solution(num = 1, num_features = 2, obj = "distance-epsilon")
+#' sol1 <- Solution(num = 1, num_features = 2, obj = "DIST-EPS")
 #' sol1$front <- 1
-#' sol2 <- Solution(num = 2, num_features = 2, obj = "distance-epsilon")
+#' sol2 <- Solution(num = 2, num_features = 2, obj = "DIST-EPS")
 #' sol2$front <- 2
 #' compare_solutions(sol1, sol2)
 compare_solutions <- function(solution1, solution2) {
@@ -636,7 +636,7 @@ compare_solutions <- function(solution1, solution2) {
 #'
 #' @examples
 #' data <- data.frame(x1 = rnorm(4), x2 = rnorm(4), y = c(-1, 1, 1, -1))
-#' sol <- Solution(num = 1, num_features = 2, obj = "distance-epsilon")
+#' sol <- Solution(num = 1, num_features = 2, obj = "DIST-EPS")
 #' sol <- generate_random_solution(sol, data, c("x1", "x2"), "y")
 #' sol <- mutate_vectors(sol, data, "y")
 mutate_vectors <- function(solution, data, output) {

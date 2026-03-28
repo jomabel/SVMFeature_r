@@ -14,7 +14,7 @@ simulate <- function(method, data_scaled, costs, population_size, input_cols, ou
                      num_obj, clones, p_mutation, p_mut_ind, p_mut_fea, p_mut_coord, mut_coord) {
   message(glue::glue("Running NSGA-II simulation with method: {method}, population size: {population_size}, number of features: {num_features}, iteration type: {iter_type}, and iteration value: {iter_val}"))
 
-  obj <- SVMFeature(
+  obj <- svm_fs_meta(
     data = data_scaled,
     inputs = input_cols,
     output = output_col,
@@ -34,7 +34,7 @@ simulate <- function(method, data_scaled, costs, population_size, input_cols, ou
     mut_coord = mut_coord
   )
 
-  result <- run.SVMFeature(obj)
+  result <- run.svm_fs_meta(obj)
   message(glue::glue("NSGA-II simulation completed with method: {method}"))
   return(result)
 }
@@ -45,7 +45,7 @@ has_header      <- FALSE
 has_index       <- TRUE
 has_costs       <- TRUE
 separator       <- ";"
-method          <- "distance-epsilon"
+method          <- "DIST-EPS"
 population_size <- 10
 num_features    <- 5
 iter_type       <- "iters"
@@ -61,7 +61,7 @@ p_mut_coord     <- 0.2
 mut_coord       <- 0
 
 # ====== Dataset loading and preprocessing ======
-# These steps are essential to prepare raw data for the SVMFeature library.
+# These steps are essential to prepare raw data for the svm_fs_meta library.
 message("Loading dataset...")
 
 data <- tryCatch({
@@ -104,13 +104,13 @@ data <- data[data[[output_col]] %in% c(-1, 1), ]
 
 message(glue::glue("Dataset prepared: {nrow(data)} rows and {ncol(data)} columns"))
 
-# ===== Load SVMFeature package =====
+# ===== Load svm_fs_meta package =====
 # load_all() is used during development to simulate loading the installed package.
 devtools::load_all(".")
-library(SVMFeature)
+library(svm_fs_meta)
 
 # ===== Algorithm execution =====
-# The simulate() helper function wraps the SVMFeature object creation and run.SVMFeature() call.
+# The simulate() helper function wraps the svm_fs_meta object creation and run.svm_fs_meta() call.
 result <- simulate(method, data, costs, population_size, input_cols, output_col, num_features, iter_type, iter_val,
                    num_obj, clones, p_mutation, p_mut_ind, p_mut_fea, p_mut_coord, mut_coord)
 

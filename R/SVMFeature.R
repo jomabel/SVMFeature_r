@@ -6,7 +6,7 @@ utils::globalVariables(c("MCNEG"))
 
 library(dplyr)
 
-#' SVMFeature Class (S3 Implementation)
+#' svm_fs_meta Class (S3 Implementation)
 #'
 #' Implements a feature selection algorithm using Support Vector Machines (SVM).
 #'
@@ -19,7 +19,7 @@ library(dplyr)
 #' @param n_iter Numeric. The number of iterations (default: 10).
 #' @param max_time Numeric. The maximum execution time (default: 300 seconds).
 #' @param mode Character. "iters" for iteration-based execution, "time" for time-based execution.
-#' @param objective Character. "distance-epsilon" or "confusion-matrix".
+#' @param objective Character. "DIST-EPS" or "MC".
 #' @param num_obj Numeric. Number of objectives (default: 2).
 #' @param clones Numeric. Number of clones (default: 0).
 #' @param p_mutation Numeric. Mutation probability (default: 0.7).
@@ -27,7 +27,7 @@ library(dplyr)
 #' @param p_mut_fea Numeric. Feature mutation probability (default: 0.4).
 #' @param p_mut_coord Numeric. Mutation coordinates probability (default: 0.2).
 #' @param mut_coord Numeric. Mutation coordinates (default: 0).
-#' @return An S3 object of class "SVMFeature".
+#' @return An S3 object of class "svm_fs_meta".
 #' @export
 #'
 #' @examples
@@ -36,14 +36,14 @@ library(dplyr)
 #'   x2 = c(1, 1, 2, 6, 5, 6),
 #'   y = c(-1, -1, -1, 1, 1, 1)
 #' )
-#' obj <- SVMFeature(data, inputs = c("x1", "x2"), output = "y", costs = c(1, 1),
+#' obj <- svm_fs_meta(data, inputs = c("x1", "x2"), output = "y", costs = c(1, 1),
 #'                   pop_size = 4, num_fea = 2, n_iter = 1)
 #'
 #' @importFrom utils head
 #' @importFrom magrittr %>%
 #' @importFrom dplyr group_by summarize n
-SVMFeature <- function(data, inputs, output, costs, pop_size, num_fea,
-                       n_iter = 10, max_time = 300, mode = "iters", objective="distance-epsilon",
+svm_fs_meta <- function(data, inputs, output, costs, pop_size, num_fea,
+                       n_iter = 10, max_time = 300, mode = "iters", objective="DIST-EPS",
                        num_obj = 2, clones = 0, p_mutation = 0.7, p_mut_ind = 0.4,
                        p_mut_fea = 0.4, p_mut_coord = 0.2, mut_coord = 0) {
 
@@ -55,11 +55,11 @@ SVMFeature <- function(data, inputs, output, costs, pop_size, num_fea,
   if (!is.numeric(n_iter) || n_iter <= 0) stop('Error: "n_iter" must be a positive number')
   if (!is.numeric(pop_size) || pop_size <= 0) stop('Error: "pop_size" must be a positive number')
   if (!is.numeric(num_fea) || num_fea <= 0) stop('Error: "num_fea" must be a positive number')
-  if (!objective %in% c("distance-epsilon", "distance-epsilon-costs",
-                        "confusion-matrix", "confusion-matrix-costs"))
-    stop('Error: "objective" must be either "distance-epsilon",
-         "distance-epsilon-costs", "confusion-matrix" or
-         "confusion-matrix-costs"')
+  if (!objective %in% c("DIST-EPS", "DIST-EPS-costs",
+                        "MC", "MC-costs"))
+    stop('Error: "objective" must be either "DIST-EPS",
+         "DIST-EPS-costs", "MC" or
+         "MC-costs"')
 
   # Normalization function  <- ¿Esto debería ser obligatorio?
   scaler <- function(x) {
@@ -91,12 +91,12 @@ SVMFeature <- function(data, inputs, output, costs, pop_size, num_fea,
                             objective = objective)
   )
 
-  class(object) <- "SVMFeature"
+  class(object) <- "svm_fs_meta"
   return(object)
 }
 
-#' Run the SVMFeature optimization process
-#' @param object An object of class "SVMFeature".
+#' Run the svm_fs_meta optimization process
+#' @param object An object of class "svm_fs_meta".
 #' @return The final population after the optimization process.
 #' @export
 #'
@@ -106,17 +106,17 @@ SVMFeature <- function(data, inputs, output, costs, pop_size, num_fea,
 #'   x2 = c(1, 1, 2, 6, 5, 6),
 #'   y = c(-1, -1, -1, 1, 1, 1)
 #' )
-#' obj <- SVMFeature(data, inputs = c("x1", "x2"), output = "y", costs = c(1, 1),
+#' obj <- svm_fs_meta(data, inputs = c("x1", "x2"), output = "y", costs = c(1, 1),
 #'                   pop_size = 4, num_fea = 2, n_iter = 1)
-#' res <- run.SVMFeature(obj)
-run.SVMFeature <- function(object) {
+#' res <- run.svm_fs_meta(obj)
+run.svm_fs_meta <- function(object) {
 
   object$population <- generate_initial_population(object$population, object$data,
                                                    object$inputs, object$output,
                                                    object$costs)
 
   object$population <- fnds(object$population)
-  object <- update_df_solutions.SVMFeature(object)
+  object <- update_df_solutions.svm_fs_meta(object)
 
   init_time <- Sys.time()
 
@@ -129,7 +129,7 @@ run.SVMFeature <- function(object) {
     reduced_population <- fnds(reduced_population)
 
     object$population <- reduced_population
-    object <- update_df_solutions.SVMFeature(object)
+    object <- update_df_solutions.svm_fs_meta(object)
     fronts_count <- object$population$df_solutions %>% dplyr::group_by(FRONT) %>% dplyr::summarize(count = dplyr::n())
     return(object)
   }
@@ -155,8 +155,8 @@ run.SVMFeature <- function(object) {
   return(object)
 }
 
-#' Draw the Pareto Front of an SVMFeature object
-#' @param x An object of class "SVMFeature".
+#' Draw the Pareto Front of an svm_fs_meta object
+#' @param x An object of class "svm_fs_meta".
 #' @param ... Additional arguments (not used).
 #' @returns An object of class `ggplot` representing the selected solution.
 #'    The plot summarizes the strcture of characteristics of the solution
@@ -170,9 +170,9 @@ run.SVMFeature <- function(object) {
 #'   x2 = c(1, 1, 2, 6, 5, 6),
 #'   y = c(-1, -1, -1, 1, 1, 1)
 #' )
-#' obj <- SVMFeature(data, inputs = c("x1", "x2"), output = "y", costs = c(1, 1),
+#' obj <- svm_fs_meta(data, inputs = c("x1", "x2"), output = "y", costs = c(1, 1),
 #'                   pop_size = 4, num_fea = 2, n_iter = 1)
-#' res <- run.SVMFeature(obj)
+#' res <- run.svm_fs_meta(obj)
 #' draw_solution(res)
 draw_solution <- function(x, ...) {
   if (is.null(x$population$df_solutions)) {
@@ -187,7 +187,7 @@ draw_solution <- function(x, ...) {
     return(NULL)
   }
 
-  if (x$objective == "distance-epsilon") {
+  if (x$objective == "DIST-EPS") {
     front_population1$DIST <- as.numeric(front_population1$DIST)
     front_population1$EPS <- as.numeric(front_population1$EPS)
 
@@ -196,7 +196,7 @@ draw_solution <- function(x, ...) {
     xvalues <- front_population1$DIST
     yvalues <- front_population1$EPS
 
-  } else if (x$objective == "confusion-matrix") {
+  } else if (x$objective == "MC") {
     front_population1$MCPOS <- as.numeric(front_population1$MCPOS)
     front_population1$MCNEG <- as.numeric(front_population1$MCNEG)
 
@@ -220,7 +220,7 @@ draw_solution <- function(x, ...) {
 }
 
 #' Save the Pareto front results to a CSV file
-#' @param object An object of class "SVMFeature".
+#' @param object An object of class "svm_fs_meta".
 #' @param output_dir Character. The directory to save the results.
 #'    This argument must be supplied explicitly.
 #' @param dataset_name Character. The name of the dataset (default: "dataset").
@@ -236,9 +236,9 @@ draw_solution <- function(x, ...) {
 #'   x2 = c(1, 1, 2, 6, 5, 6),
 #'   y = c(-1, -1, -1, 1, 1, 1)
 #' )
-#' obj <- SVMFeature(data, inputs = c("x1", "x2"), output = "y", costs = c(1, 1),
+#' obj <- svm_fs_meta(data, inputs = c("x1", "x2"), output = "y", costs = c(1, 1),
 #'                   pop_size = 4, num_fea = 2, n_iter = 1)
-#' res <- run.SVMFeature(obj)
+#' res <- run.svm_fs_meta(obj)
 #' temp_dir <- tempdir()
 #' save_results(res, output_dir = temp_dir, dataset_name = "test")
 save_results <- function(object, output_dir, dataset_name = "dataset") {
@@ -280,9 +280,9 @@ save_results <- function(object, output_dir, dataset_name = "dataset") {
   return(invisible(output_file))
 }
 
-#' Update df_solutions for an SVMFeature object
-#' @param object An object of class "SVMFeature".
-#' @return The updated SVMFeature object.
+#' Update df_solutions for an svm_fs_meta object
+#' @param object An object of class "svm_fs_meta".
+#' @return The updated svm_fs_meta object.
 #' @export
 #'
 #' @examples
@@ -291,12 +291,12 @@ save_results <- function(object, output_dir, dataset_name = "dataset") {
 #'   x2 = c(1, 1, 2, 6, 5, 6),
 #'   y = c(-1, -1, -1, 1, 1, 1)
 #' )
-#' obj <- SVMFeature(data, inputs = c("x1", "x2"), output = "y", costs = c(1, 1),
+#' obj <- svm_fs_meta(data, inputs = c("x1", "x2"), output = "y", costs = c(1, 1),
 #'                   pop_size = 4, num_fea = 2, n_iter = 1)
 #' obj$population <- generate_initial_population(obj$population, obj$data, obj$inputs, obj$output, obj$costs)
 #' obj$population <- fnds(obj$population)
-#' obj <- update_df_solutions.SVMFeature(obj)
-update_df_solutions.SVMFeature <- function(object) {
+#' obj <- update_df_solutions.svm_fs_meta(obj)
+update_df_solutions.svm_fs_meta <- function(object) {
   df_solutions <- do.call(rbind, lapply(object$population$solution_list, function(solution) {
     solution_dict <- to_dict(solution)
     solution_dict <- lapply(solution_dict, function(item) if (is.list(item)) unlist(item) else item)

@@ -53,7 +53,7 @@ obj <- SVMFeature(
   num_fea = 5,
   n_iter = 10,
   mode = "iters",
-  objective = "distance-epsilon"
+  objective = "DIST-EPS"
 )
 
 # 4. Execute optimization
@@ -80,7 +80,7 @@ Initializes the optimization object.
 | `costs` | `numeric` | - | Costs associated with each feature. |
 | `pop_size` | `numeric` | - | Size of the population. |
 | `num_fea` | `numeric` | - | Maximum number of features to select. |
-| `objective` | `character` | `"distance-epsilon"` | Objectives: `"distance-epsilon"` or `"confusion-matrix"`. |
+| `objective` | `character` | `"DIST-EPS"` | Objectives: `"DIST-EPS"` or `"MC"`. |
 | `n_iter` | `numeric` | `10` | Number of iterations (used if `mode="iters"`). |
 | `max_time` | `numeric` | `300` | Maximum seconds (used if `mode="time"`). |
 | `mode` | `character` | `"iters"` | Execution mode: `"iters"` or `"time"`. |
