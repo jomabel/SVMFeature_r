@@ -1,8 +1,8 @@
 ---
-title: "SVMFeature"
+title: "svm_fs_meta"
 output: rmarkdown::html_vignette
 vignette: >
-  %\VignetteIndexEntry{SVMFeature}
+  %\VignetteIndexEntry{svm_fs_meta}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---
@@ -14,33 +14,33 @@ knitr::opts_chunk$set(
 )
 ```
 
-# SVMFeature
+# svm_fs_meta
 
-This vignette provides a comprehensive overview of the functionalities offered by the `SVMFeature` package. The `SVMFeature` package is designed to facilitate support vector machine (SVM) feature selection in R.
+This vignette provides a comprehensive overview of the functionalities offered by the `svm_fs_meta` package. The `svm_fs_meta` package is designed to facilitate support vector machine (SVM) feature selection in R.
 
 ## Introduction
 
 Support vector machines are a popular machine learning algorithm used for classification and regression tasks. Feature selection is an essential step in building effective SVM models, as it helps to improve model performance by selecting the most relevant features.
 
-The `SVMFeature` package implements various methods for SVM feature selection, allowing users to preprocess their datasets and identify the most important features for their models.
+The `svm_fs_meta` package implements various methods for SVM feature selection, allowing users to preprocess their datasets and identify the most important features for their models.
 
 ## Installation
 
-You can install the `SVMFeature` package from CRAN using the following command:
+You can install the `svm_fs_meta` package from CRAN using the following command:
 
 ```r
-install.packages("SVMFeature")
+install.packages("svm_fs_meta")
 ```
 
 Alternatively, you can install the development version of the package from GitHub:
 
 ```r
-devtools::install_github("ajbanegas/SVMFeature")
+devtools::install_github("ajbanegas/svm_fs_meta")
 ```
 
 ## Example Datasets
 
-The package includes several datasets that follow a specific format: no headers, index column in the first position, and class labels in the second column (which becomes the first after index removal). Some datasets also include a cost row.
+The package includes several datasets that follow a specific format: no headers, index column in the first position, and class labels in the second column (which becomes the first after index removal). 
 
 Available datasets:
 - `09Colon_p.txt`: Colon cancer dataset.
@@ -56,10 +56,10 @@ To demonstrate the usage, we will use the `09Colon_p.txt` dataset.
 
 ### 1. Data Preprocessing
 
-The datasets require specific preprocessing steps to correctly identify features, labels, and costs.
+The datasets require specific preprocessing steps to correctly identify features, labels.
 
 ```r
-library(SVMFeature)
+library(svmfsmeta)
 library(readr)
 
 # 1. Load the dataset (using 09Colon_p.txt as an example)
@@ -75,10 +75,6 @@ data <- data[,-1]
 num_cols <- ncol(data)
 names(data) <- c("y", paste0("x", 1:(num_cols-1)))
 
-# 4. Extract feature costs (first row contains costs for each feature)
-costs <- as.numeric(data[1, -1])
-data  <- data[-1, ] # Remove the cost row from training data
-
 # 5. Filter for binary classification labels (-1 and 1)
 data <- data[data$y %in% c(-1, 1), ]
 ```
@@ -92,22 +88,20 @@ Once the data is prepared, we define the inputs and target, and run the optimiza
 input_cols <- names(data)[-1]
 output_col <- names(data)[1]
 
-# Initialize SVMFeature object
+# Initialize svm_fs_meta object
 # You can choose between different optimization objectives:
-# - "distance-epsilon": Maximizes margin and minimizes error (default).
+# - "DIST-EPS": Maximizes margin and minimizes error (default).
 # - "confusion-matrix": Minimizes False Positives and False Negatives.
-# - "distance-epsilon-costs" / "confusion-matrix-costs": Includes feature cost optimization.
 
-obj <- SVMFeature(
+obj <- svm_fs_meta(
   data = data,
   inputs = input_cols,
   output = output_col,
-  costs = costs,
   pop_size = 10,
   num_fea = 5,
   n_iter = 10,
   mode = "iters",
-  objective = "distance-epsilon",
+  objective = "DIST-EPS",
   # Advanced parameters (optional, shown here with defaults)
   num_obj = 2,
   clones = 0,
@@ -119,7 +113,7 @@ obj <- SVMFeature(
 )
 
 # Execute optimization
-result <- run.SVMFeature(obj)
+result <- run.svm_fs_meta(obj)
 ```
 
 ### 3. Visualization
@@ -142,4 +136,4 @@ save_results(result, dataset_name = "09Colon_p")
 
 ## Conclusion
 
-In this vignette, we explored the `SVMFeature` package and demonstrated its usage for SVM feature selection. By selecting the most relevant features, users can improve the performance of their SVM models and achieve better classification or regression results.
+In this vignette, we explored the `svm_fs_meta` package and demonstrated its usage for SVM feature selection. By selecting the most relevant features, users can improve the performance of their SVM models and achieve better classification or regression results.

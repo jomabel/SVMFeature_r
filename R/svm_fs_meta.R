@@ -13,7 +13,6 @@ library(dplyr)
 #' @param data DataFrame. The input data.
 #' @param inputs Character vector. The names of the input features.
 #' @param output Character. The name of the output variable.
-#' @param costs Numeric vector. The costs associated with the features.
 #' @param pop_size Numeric. The population size.
 #' @param num_fea Numeric. The number of features.
 #' @param n_iter Numeric. The number of iterations (default: 10).
@@ -36,13 +35,13 @@ library(dplyr)
 #'   x2 = c(1, 1, 2, 6, 5, 6),
 #'   y = c(-1, -1, -1, 1, 1, 1)
 #' )
-#' obj <- svm_fs_meta(data, inputs = c("x1", "x2"), output = "y", costs = c(1, 1),
+#' obj <- svm_fs_meta(data, inputs = c("x1", "x2"), output = "y",
 #'                   pop_size = 4, num_fea = 2, n_iter = 1)
 #'
 #' @importFrom utils head
 #' @importFrom magrittr %>%
 #' @importFrom dplyr group_by summarize n
-svm_fs_meta <- function(data, inputs, output, costs, pop_size, num_fea,
+svm_fs_meta <- function(data, inputs, output, pop_size, num_fea,
                        n_iter = 10, max_time = 300, mode = "iters", objective="DIST-EPS",
                        num_obj = 2, clones = 0, p_mutation = 0.7, p_mut_ind = 0.4,
                        p_mut_fea = 0.4, p_mut_coord = 0.2, mut_coord = 0) {
@@ -55,11 +54,8 @@ svm_fs_meta <- function(data, inputs, output, costs, pop_size, num_fea,
   if (!is.numeric(n_iter) || n_iter <= 0) stop('Error: "n_iter" must be a positive number')
   if (!is.numeric(pop_size) || pop_size <= 0) stop('Error: "pop_size" must be a positive number')
   if (!is.numeric(num_fea) || num_fea <= 0) stop('Error: "num_fea" must be a positive number')
-  if (!objective %in% c("DIST-EPS", "DIST-EPS-costs",
-                        "MC", "MC-costs"))
-    stop('Error: "objective" must be either "DIST-EPS",
-         "DIST-EPS-costs", "MC" or
-         "MC-costs"')
+  if (!objective %in% c("DIST-EPS", "MC"))
+    stop('Error: "objective" must be either "DIST-EPS" or "MC"')
 
   # Normalization function  <- ¿Esto debería ser obligatorio?
   scaler <- function(x) {
@@ -77,14 +73,13 @@ svm_fs_meta <- function(data, inputs, output, costs, pop_size, num_fea,
     data = norm_data,
     inputs = inputs,
     output = output,
-    costs = costs,
     pop_size = pop_size,
     num_fea = num_fea,
     n_iter = n_iter,
     max_time = max_time,
     mode = mode,
     objective = objective,
-    population = Population(pop_size = pop_size, num_features = num_fea,
+    population = population(pop_size = pop_size, num_features = num_fea,
                             num_obj = num_obj, clones = clones, p_mutation = p_mutation,
                             p_mut_ind = p_mut_ind, p_mut_fea = p_mut_fea,
                             p_mut_coord = p_mut_coord, mut_coord = mut_coord,
@@ -106,14 +101,13 @@ svm_fs_meta <- function(data, inputs, output, costs, pop_size, num_fea,
 #'   x2 = c(1, 1, 2, 6, 5, 6),
 #'   y = c(-1, -1, -1, 1, 1, 1)
 #' )
-#' obj <- svm_fs_meta(data, inputs = c("x1", "x2"), output = "y", costs = c(1, 1),
+#' obj <- svm_fs_meta(data, inputs = c("x1", "x2"), output = "y",
 #'                   pop_size = 4, num_fea = 2, n_iter = 1)
 #' res <- run.svm_fs_meta(obj)
 run.svm_fs_meta <- function(object) {
 
   object$population <- generate_initial_population(object$population, object$data,
-                                                   object$inputs, object$output,
-                                                   object$costs)
+                                                   object$inputs, object$output)
 
   object$population <- fnds(object$population)
   object <- update_df_solutions.svm_fs_meta(object)
@@ -122,7 +116,7 @@ run.svm_fs_meta <- function(object) {
 
   run_iteration <- function() {
     object$population <- new_population(object$population, object$data,
-                                        object$inputs, object$output, object$costs)
+                                        object$inputs, object$output)
     object$population <- fnds(object$population)
 
     reduced_population <- reduce_population(object$population)
@@ -170,7 +164,7 @@ run.svm_fs_meta <- function(object) {
 #'   x2 = c(1, 1, 2, 6, 5, 6),
 #'   y = c(-1, -1, -1, 1, 1, 1)
 #' )
-#' obj <- svm_fs_meta(data, inputs = c("x1", "x2"), output = "y", costs = c(1, 1),
+#' obj <- svm_fs_meta(data, inputs = c("x1", "x2"), output = "y",
 #'                   pop_size = 4, num_fea = 2, n_iter = 1)
 #' res <- run.svm_fs_meta(obj)
 #' draw_solution(res)
@@ -236,7 +230,7 @@ draw_solution <- function(x, ...) {
 #'   x2 = c(1, 1, 2, 6, 5, 6),
 #'   y = c(-1, -1, -1, 1, 1, 1)
 #' )
-#' obj <- svm_fs_meta(data, inputs = c("x1", "x2"), output = "y", costs = c(1, 1),
+#' obj <- svm_fs_meta(data, inputs = c("x1", "x2"), output = "y",
 #'                   pop_size = 4, num_fea = 2, n_iter = 1)
 #' res <- run.svm_fs_meta(obj)
 #' temp_dir <- tempdir()
@@ -291,9 +285,9 @@ save_results <- function(object, output_dir, dataset_name = "dataset") {
 #'   x2 = c(1, 1, 2, 6, 5, 6),
 #'   y = c(-1, -1, -1, 1, 1, 1)
 #' )
-#' obj <- svm_fs_meta(data, inputs = c("x1", "x2"), output = "y", costs = c(1, 1),
+#' obj <- svm_fs_meta(data, inputs = c("x1", "x2"), output = "y",
 #'                   pop_size = 4, num_fea = 2, n_iter = 1)
-#' obj$population <- generate_initial_population(obj$population, obj$data, obj$inputs, obj$output, obj$costs)
+#' obj$population <- generate_initial_population(obj$population, obj$data, obj$inputs, obj$output)
 #' obj$population <- fnds(obj$population)
 #' obj <- update_df_solutions.svm_fs_meta(obj)
 update_df_solutions.svm_fs_meta <- function(object) {

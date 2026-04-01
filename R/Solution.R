@@ -1,19 +1,19 @@
-  #' @title Definition of the Solution Class
+  #' @title Definition of the solution Class
 #'
 #' @description
-#'   Defines the `Solution` class, which represents an individual solution.
+#'   Defines the `solution` class, which represents an individual solution.
 #'
-#' @param num Solution number
+#' @param num solution number
 #' @param num_features Number of features
 #' @param obj Objective
 #'
-#' @return Object of the `Solution` class
+#' @return Object of the `solution` class
 #'
 #' @export
 #'
 #' @examples
-#' sol <- Solution(num = 1, num_features = 2, obj = "DIST-EPS")
-Solution <- function(num, num_features, obj) {
+#' sol <- solution(num = 1, num_features = 2, obj = "DIST-EPS")
+solution <- function(num, num_features, obj) {
   # Define instance variables
   solution <- list(
     num = num,
@@ -43,14 +43,14 @@ Solution <- function(num, num_features, obj) {
 #' @description
 #'   Method to convert the solution to a dictionary
 #'
-#' @param solution Solution class object
+#' @param solution solution class object
 #'
 #' @return List with the information of the solution
 #'
 #' @export
 #'
 #' @examples
-#' sol <- Solution(num = 1, num_features = 2, obj = "DIST-EPS")
+#' sol <- solution(num = 1, num_features = 2, obj = "DIST-EPS")
 #' sol_dict <- to_dict(sol)
 to_dict <- function(solution) {
   return(list(
@@ -84,7 +84,7 @@ to_dict <- function(solution) {
 #' @description
 #'   Method to obtain a random class vector from the dataset.
 #'
-#' @param solution Solution class object containing the dataset
+#' @param solution solution class object containing the dataset
 #' @param clazz Class for which to obtain a vector
 #' @param data A data.frame with the input features
 #' @param output A vector with class labels
@@ -94,7 +94,7 @@ to_dict <- function(solution) {
 #'
 #' @examples
 #' data <- data.frame(y = c(-1, 1, 1, -1))
-#' sol <- Solution(num = 1, num_features = 2, obj = "DIST-EPS")
+#' sol <- solution(num = 1, num_features = 2, obj = "DIST-EPS")
 #' idx <- get_class_vector(sol, clazz = 1, data = data, output = "y")
 get_class_vector <- function(solution, clazz, data, output) {
   indices <- which(data[[output]] == clazz)
@@ -107,25 +107,25 @@ get_class_vector <- function(solution, clazz, data, output) {
 
 
 
-#' @title Method to Generate a Random Solution
+#' @title Method to Generate a Random solution
 #'
 #' @description
 #'   Method to generate a random solution by selecting random features and class vectors.
 #'
-#' @param solution Solution class object to modify
+#' @param solution solution class object to modify
 #' @param data A data.frame with the input features
 #' @param inputs A vector of input features
 #' @param output A vector with class labels
 #'
 #' @importFrom stats runif
 #'
-#' @return Solution class object with a randomly generated solution
+#' @return solution class object with a randomly generated solution
 #'
 #' @export
 #'
 #' @examples
 #' data <- data.frame(x1 = rnorm(4), x2 = rnorm(4), y = c(-1, 1, 1, -1))
-#' sol <- Solution(num = 1, num_features = 2, obj = "DIST-EPS")
+#' sol <- solution(num = 1, num_features = 2, obj = "DIST-EPS")
 #' sol <- generate_random_solution(sol, data, c("x1", "x2"), "y")
 generate_random_solution <- function(solution, data, inputs, output) {
   # Select two points from class A and B
@@ -170,16 +170,16 @@ generate_random_solution <- function(solution, data, inputs, output) {
 #' @description
 #'   Method to construct planes by calculating the coefficients based on features.
 #'
-#' @param solution Solution class object containing data and features to construct planes
+#' @param solution solution class object containing data and features to construct planes
 #' @param data A data.frame with the input features
 #'
-#' @return Solution class object with constructed planes
+#' @return solution class object with constructed planes
 #'
 #' @export
 #'
 #' @examples
 #' data <- data.frame(x1 = rnorm(4), x2 = rnorm(4), y = c(-1, 1, 1, -1))
-#' sol <- Solution(num = 1, num_features = 2, obj = "DIST-EPS")
+#' sol <- solution(num = 1, num_features = 2, obj = "DIST-EPS")
 #' sol <- generate_random_solution(sol, data, c("x1", "x2"), "y")
 #' sol <- construct_planes(sol, data)
 construct_planes <- function(solution, data) {
@@ -231,15 +231,15 @@ construct_planes <- function(solution, data) {
 #' @description
 #'   This method calculates the distance objective based on the plane equation.
 #'
-#' @param solution Solution class object containing the plane equation
+#' @param solution solution class object containing the plane equation
 #'
-#' @return Solution class object with the distance objective calculated
+#' @return solution class object with the distance objective calculated
 #'
 #' @export
 #'
 #' @examples
 #' data <- data.frame(x1 = rnorm(4), x2 = rnorm(4), y = c(-1, 1, 1, -1))
-#' sol <- Solution(num = 1, num_features = 2, obj = "DIST-EPS")
+#' sol <- solution(num = 1, num_features = 2, obj = "DIST-EPS")
 #' sol <- generate_random_solution(sol, data, c("x1", "x2"), "y")
 #' sol <- construct_planes(sol, data)
 #' sol <- calculate_distance_objective(sol)
@@ -265,17 +265,17 @@ calculate_distance_objective <- function(solution) {
 #' @description
 #'   This method calculates the epsilon objective by evaluating misclassified points.
 #'
-#' @param solution Solution class object containing data and features for classification
+#' @param solution solution class object containing data and features for classification
 #' @param data A data.frame with the input features.
 #' @param output A vector with class labels.
 #'
-#' @return Solution class object with the epsilon objective calculated
+#' @return solution class object with the epsilon objective calculated
 #'
 #' @export
 #'
 #' @examples
 #' data <- data.frame(x1 = rnorm(4), x2 = rnorm(4), y = c(-1, 1, 1, -1))
-#' sol <- Solution(num = 1, num_features = 2, obj = "DIST-EPS")
+#' sol <- solution(num = 1, num_features = 2, obj = "DIST-EPS")
 #' sol <- generate_random_solution(sol, data, c("x1", "x2"), "y")
 #' sol <- construct_planes(sol, data)
 #' sol <- calculate_epsilon_objective(sol, data, "y")
@@ -360,7 +360,7 @@ calculate_epsilon_objective <- function(solution, data, output) {
       }
     }
   }
-  solution <- svm_fs_meta::calculate_metrics(solution, y_true, y_pred, decision_scores)
+  solution <- svmfsmeta::calculate_metrics(solution, y_true, y_pred, decision_scores)
   return(solution)
 }
 
@@ -389,11 +389,11 @@ calculate_epsilon_objective <- function(solution, data, output) {
 #' @export
 #'
 #' @examples
-#' sol <- Solution(num = 1, num_features = 2, obj = "DIST-EPS")
+#' sol <- solution(num = 1, num_features = 2, obj = "DIST-EPS")
 #' y_true <- c(-1, 1, 1, -1)
 #' y_pred <- c(-1, 1, -1, -1)
 #' scores <- c(-0.5, 0.8, -0.1, -0.9)
-#' sol <- svm_fs_meta::calculate_metrics(sol, y_true, y_pred, scores)
+#' sol <- svmfsmeta::calculate_metrics(sol, y_true, y_pred, scores)
 calculate_metrics <- function(solution, y_true, y_pred, decision_scores){
   y_true_bin <- ifelse(y_true == 1, 1, 0)
   y_pred_bin <- ifelse(y_pred == 1, 1, 0)
@@ -418,22 +418,22 @@ calculate_metrics <- function(solution, y_true, y_pred, decision_scores){
 }
 
 
-#' @title Evaluate Solution
+#' @title Evaluate solution
 #'
 #' @description
 #'   This function evaluates a solution by calculating its objectives.
 #'
-#' @param solution Solution class object to be evaluated
+#' @param solution solution class object to be evaluated
 #' @param data A data.frame with the input features
 #' @param output A vector with class labels
 #'
-#' @return Solution class object with updated evaluation status and objectives
+#' @return solution class object with updated evaluation status and objectives
 #'
 #' @export
 #'
 #' @examples
 #' data <- data.frame(x1 = rnorm(4), x2 = rnorm(4), y = c(-1, 1, 1, -1))
-#' sol <- Solution(num = 1, num_features = 2, obj = "DIST-EPS")
+#' sol <- solution(num = 1, num_features = 2, obj = "DIST-EPS")
 #' sol <- generate_random_solution(sol, data, c("x1", "x2"), "y")
 #' sol <- evaluate_solution(sol, data, "y")
 evaluate_solution <- function(solution, data, output) {
@@ -446,8 +446,8 @@ evaluate_solution <- function(solution, data, output) {
     # Procedures to evaluate the solution if there are valid coordinates
     solution <- construct_planes(solution, data)
 
-    solution <- svm_fs_meta::calculate_distance_objective(solution)
-    solution <- svm_fs_meta::calculate_epsilon_objective(solution, data, output)
+    solution <- svmfsmeta::calculate_distance_objective(solution)
+    solution <- svmfsmeta::calculate_epsilon_objective(solution, data, output)
 
 
     # Assume evaluations were successful if this point is reached
@@ -471,9 +471,9 @@ evaluate_solution <- function(solution, data, output) {
 #' @export
 #'
 #' @examples
-#' sol1 <- Solution(num = 1, num_features = 2, obj = "DIST-EPS")
+#' sol1 <- solution(num = 1, num_features = 2, obj = "DIST-EPS")
 #' sol1$objective <- c(1, 0, 0, 0)
-#' sol2 <- Solution(num = 2, num_features = 2, obj = "DIST-EPS")
+#' sol2 <- solution(num = 2, num_features = 2, obj = "DIST-EPS")
 #' sol2$objective <- c(0, 1, 1, 1)
 #' dominate(sol1, sol2)
 dominate <- function(solution1, solution2) {
@@ -510,7 +510,7 @@ dominate <- function(solution1, solution2) {
 #' @export
 #'
 #' @examples
-#' sol <- Solution(num = 1, num_features = 2, obj = "DIST-EPS")
+#' sol <- solution(num = 1, num_features = 2, obj = "DIST-EPS")
 #' sol$objective <- c(1, 0, 0, 0)
 #' is_valid_solution(sol)
 is_valid_solution <- function(solution) {
@@ -545,9 +545,9 @@ is_valid_solution <- function(solution) {
 #' @export
 #'
 #' @examples
-#' sol1 <- Solution(num = 1, num_features = 2, obj = "DIST-EPS")
+#' sol1 <- solution(num = 1, num_features = 2, obj = "DIST-EPS")
 #' sol1$objective <- c(1, 0, 0, 0)
-#' sol2 <- Solution(num = 2, num_features = 2, obj = "DIST-EPS")
+#' sol2 <- solution(num = 2, num_features = 2, obj = "DIST-EPS")
 #' sol2$objective <- c(0, 1, 1, 1)
 #' dominate2(sol1, sol2)
 dominate2 <- function(solution1, solution2) {
@@ -578,7 +578,7 @@ dominate2 <- function(solution1, solution2) {
 }
 
 
-#' @title Method to Compare Solutions
+#' @title Method to Compare solutions
 #'
 #' @description
 #'   This function compares two solutions based on their front and dominance information.
@@ -591,9 +591,9 @@ dominate2 <- function(solution1, solution2) {
 #' @export
 #'
 #' @examples
-#' sol1 <- Solution(num = 1, num_features = 2, obj = "DIST-EPS")
+#' sol1 <- solution(num = 1, num_features = 2, obj = "DIST-EPS")
 #' sol1$front <- 1
-#' sol2 <- Solution(num = 2, num_features = 2, obj = "DIST-EPS")
+#' sol2 <- solution(num = 2, num_features = 2, obj = "DIST-EPS")
 #' sol2$front <- 2
 #' compare_solutions(sol1, sol2)
 compare_solutions <- function(solution1, solution2) {
@@ -626,17 +626,17 @@ compare_solutions <- function(solution1, solution2) {
 #' @description
 #'   This function mutates the vectors in the solution by assigning new class vectors.
 #'
-#' @param solution Solution class object to mutate
+#' @param solution solution class object to mutate
 #' @param data A data.frame with the input features.
 #' @param output A vector with class labels.
 #'
-#' @return Solution class object with updated vectors
+#' @return solution class object with updated vectors
 #'
 #' @export
 #'
 #' @examples
 #' data <- data.frame(x1 = rnorm(4), x2 = rnorm(4), y = c(-1, 1, 1, -1))
-#' sol <- Solution(num = 1, num_features = 2, obj = "DIST-EPS")
+#' sol <- solution(num = 1, num_features = 2, obj = "DIST-EPS")
 #' sol <- generate_random_solution(sol, data, c("x1", "x2"), "y")
 #' sol <- mutate_vectors(sol, data, "y")
 mutate_vectors <- function(solution, data, output) {

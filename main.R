@@ -10,7 +10,7 @@ suppressPackageStartupMessages({
 })
 
 # ===== Helper functions =====
-simulate <- function(method, data_scaled, costs, population_size, input_cols, output_col, num_features, iter_type, iter_val,
+simulate <- function(method, data_scaled, population_size, input_cols, output_col, num_features, iter_type, iter_val,
                      num_obj, clones, p_mutation, p_mut_ind, p_mut_fea, p_mut_coord, mut_coord) {
   message(glue::glue("Running NSGA-II simulation with method: {method}, population size: {population_size}, number of features: {num_features}, iteration type: {iter_type}, and iteration value: {iter_val}"))
 
@@ -18,7 +18,6 @@ simulate <- function(method, data_scaled, costs, population_size, input_cols, ou
     data = data_scaled,
     inputs = input_cols,
     output = output_col,
-    costs = costs,
     pop_size = population_size,
     num_fea = num_features,
     n_iter = iter_val,
@@ -43,7 +42,6 @@ simulate <- function(method, data_scaled, costs, population_size, input_cols, ou
 dataset         <- "data/09Colon_p.txt"
 has_header      <- FALSE
 has_index       <- TRUE
-has_costs       <- TRUE
 separator       <- ";"
 method          <- "DIST-EPS"
 population_size <- 10
@@ -88,14 +86,6 @@ if (!has_header) {
 output_col <- names(data)[1]
 input_cols <- names(data)[-1]
 
-# 3. Handle feature costs.
-# In many datasets, the first row (after headers) contains the acquisition cost for each feature.
-if (has_costs) {
-  costs <- as.numeric(data[1, -1])
-  data  <- data[-1, ] # Remove the cost row from the training data
-} else {
-  costs <- rep(0.0, length(input_cols)) # Use 0 costs if none are provided
-}
 
 # 4. Binary Classification target check.
 # The current SVM implementation requires binary labels (e.g., -1 and 1).
@@ -107,11 +97,11 @@ message(glue::glue("Dataset prepared: {nrow(data)} rows and {ncol(data)} columns
 # ===== Load svm_fs_meta package =====
 # load_all() is used during development to simulate loading the installed package.
 devtools::load_all(".")
-library(svm_fs_meta)
+library(svmfsmeta)
 
 # ===== Algorithm execution =====
 # The simulate() helper function wraps the svm_fs_meta object creation and run.svm_fs_meta() call.
-result <- simulate(method, data, costs, population_size, input_cols, output_col, num_features, iter_type, iter_val,
+result <- simulate(method, data, population_size, input_cols, output_col, num_features, iter_type, iter_val,
                    num_obj, clones, p_mutation, p_mut_ind, p_mut_fea, p_mut_coord, mut_coord)
 
 # ===== Result Export and Visualization =====

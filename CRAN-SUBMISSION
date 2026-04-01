@@ -1,4 +1,4 @@
-This is the initial submission of the package SVMFeature to CRAN.
+This is the initial submission of the package svmfsmeta to CRAN.
 
 The package provides a feature selection algorithm using support vector machines and multi-objective optimization. It includes complete documentation, vignettes, and unit tests.
 

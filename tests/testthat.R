@@ -7,6 +7,6 @@
 # * https://testthat.r-lib.org/articles/special-files.html
 
 library(testthat)
-library(SVMFeature)
+library(svmfsmeta)
 
-test_check("SVMFeature")
+test_check("svmfsmeta")

@@ -1,26 +1,25 @@
 library(testthat)
-library(SVMFeature)
+library(svmfsmeta)
 
-test_that("SVMFeature initializes correctly", {
+test_that("svmfsmeta initializes correctly", {
   data <- data.frame(x1 = 1:4, x2 = 11:14, y = 5:8)
 
   inputs <- c('x1', 'x2')
   output <- 'y'
-  costs <- rep(1, length(inputs))
   pop_size <- 50
   num_fea <- 1
   n_iter <- 10
   max_time <- 300
   mode <- "time"
 
-  svm <- SVMFeature(data, inputs, output, costs, pop_size, num_fea, n_iter, max_time, mode)
+  svm <- svm_fs_meta(data, inputs, output, pop_size, num_fea, n_iter, max_time, mode)
 
-  expect_s3_class(svm, "SVMFeature")
+  expect_s3_class(svm, "svm_fs_meta")
   expect_equal(svm$mode, "time")
   expect_equal(svm$num_fea, num_fea)
 })
 
-test_that("SVMFeature creates a population based on time-limit", {
+test_that("svmfsmeta creates a population based on time-limit", {
 
   set.seed(123)
 
@@ -32,12 +31,11 @@ test_that("SVMFeature creates a population based on time-limit", {
     x3 = sample(1:10, 6, replace = TRUE)   # Random integer values for x3 (range: 1 to 10)
   )
 
-  svm <- SVMFeature(data, inputs = c('x1', 'x2', 'x3'), output = "y",
-                    costs = c(5, 27, 10), pop_size = 10, num_fea = 2,
+  svm <- svmfsmeta::svm_fs_meta(data, inputs = c('x1', 'x2', 'x3'), output = "y", pop_size = 10, num_fea = 2,
                     mode = "time", n_iter = 5, max_time = 10)
-  svm <- run.SVMFeature(svm)
+  svm <- run.svm_fs_meta(svm)
 
-  expect_s3_class(svm, "SVMFeature")
+  expect_s3_class(svm, "svm_fs_meta")
   expect_false(is.null(svm$population))
-  expect_s3_class(svm$population, "Population")
+  expect_s3_class(svm$population, "population")
 })

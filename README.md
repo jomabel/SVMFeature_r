@@ -1,6 +1,6 @@
-# 🧠 SVMFeature: Multi-objective SVM Classifier with Feature Selection
+# 🧠 SVMFsMeta: Multi-objective SVM Classifier with Feature Selection
 
-`SVMFeature` is an R package that implements the algorithms proposed by Valero et al. (2023) and Alcaraz, J. (2024). It provides a metaheuristic approach to solve the **soft-margin Support Vector Machine (SVM)** problem combined with **Feature Selection**.
+`SVMFsMeta` is an R package that implements the algorithms proposed by Valero et al. (2023) and Alcaraz, J. (2024). It provides a metaheuristic approach to solve the **soft-margin Support Vector Machine (SVM)** problem combined with **Feature Selection**.
 
 The result of the algorithm is a **Pareto front**, where each solution is an SVM-based classifier, allowing decision-makers to select the optimal model based on their specific trade-offs between accuracy and complexity.
 
@@ -29,7 +29,7 @@ devtools::install_github("ajbanegas/SVMFeature")
 The library is designed to work with structured bioinformatics datasets (no headers, index column, and class labels in the first column).
 
 ```r
-library(SVMFeature)
+library(svmfsmeta)
 library(readr)
 
 # 1. Load the dataset (example: 09Colon_p.txt)
@@ -44,7 +44,7 @@ data  <- data[-1, ]
 data  <- data[data$y %in% c(-1, 1), ]
 
 # 3. Initialize and run the optimizer
-obj <- SVMFeature(
+obj <- svm_fs_meta(
   data = data,
   inputs = names(data)[-1],
   output = "y",
@@ -57,7 +57,7 @@ obj <- SVMFeature(
 )
 
 # 4. Execute optimization
-result <- run.SVMFeature(obj)
+result <- run.svm_fs_meta(obj)
 
 # 5. Visualize and Save
 draw_solution(result)
@@ -68,7 +68,7 @@ save_results(result, dataset_name = "09Colon_p")
 
 ## 🛠️ API Reference
 
-### `SVMFeature` (Constructor)
+### `svm_fs_meta` (Constructor)
 
 Initializes the optimization object.
 
@@ -90,7 +90,7 @@ Initializes the optimization object.
 | `p_mut_fea` | `numeric` | `0.4` | Probability of mutating a feature selection. |
 | `p_mut_coord` | `numeric` | `0.2` | Probability of mutating hyperplane coordinates. |
 
-### `run.SVMFeature(object)`
+### `run.svm_fs_meta(object)`
 Starts the optimization process (NSGA-II).
 
 ### `draw_solution(x)`

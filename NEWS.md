@@ -1,4 +1,4 @@
-# SVMFeature 0.1.0
+# svmfsmeta 0.1.0
 
 * Initial release on CRAN.
 * Implements multi-objective feature selection using support vector machines.

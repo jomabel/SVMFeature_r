@@ -1,7 +1,7 @@
-#' @title Definition of the Population Class
+#' @title Definition of the population Class
 #'
 #' @description
-#'   This function defines the `Population` class with its attributes and methods.
+#'   This function defines the `population` class with its attributes and methods.
 #'
 #' @param pop_size Maximum population size
 #' @param num_features Number of features selected
@@ -14,13 +14,13 @@
 #' @param mut_coord Mutation coordinates (default: 0)
 #' @param objective The objective (default: DIST-EPS)
 #'
-#' @return Object of the `Population` class
+#' @return Object of the `population` class
 #'
 #' @export
 #'
 #' @examples
-#' pop <- Population(pop_size = 10, num_features = 3, objective = "DIST-EPS")
-Population <- function(pop_size, num_features, num_obj = 2, clones = 0, p_mutation = 0.7,
+#' pop <- population(pop_size = 10, num_features = 3, objective = "DIST-EPS")
+population <- function(pop_size, num_features, num_obj = 2, clones = 0, p_mutation = 0.7,
                        p_mut_ind = 0.4, p_mut_fea = 0.4, p_mut_coord = 0.2, mut_coord = 0,
                        objective = "DIST-EPS")
 {
@@ -42,7 +42,7 @@ Population <- function(pop_size, num_features, num_obj = 2, clones = 0, p_mutati
     objective = objective
   )
 
-  class(population) <- "Population"
+  class(population) <- "population"
   return(population)
 }
 
@@ -53,13 +53,12 @@ Population <- function(pop_size, num_features, num_obj = 2, clones = 0, p_mutati
 #' @description
 #'   This function generates the initial population.
 #'
-#' @param population Population class object
+#' @param population population class object
 #' @param data A data.frame with the input features
 #' @param inputs A vector of input features
 #' @param output A vector with class labels
-#' @param costs A vector with feature costs //Esto no debería estar en este algoritmo//
 #'
-#' @return Population class object updated with the generated initial population
+#' @return population class object updated with the generated initial population
 #'
 #' @export
 #'
@@ -69,15 +68,15 @@ Population <- function(pop_size, num_features, num_obj = 2, clones = 0, p_mutati
 #'   x1 = rnorm(20), x2 = rnorm(20),
 #'   y = sample(c(-1, 1), 20, replace = TRUE)
 #' )
-#' pop <- Population(pop_size = 2, num_features = 2, objective = "DIST-EPS")
-#' pop <- generate_initial_population(pop, data, c("x1", "x2"), "y", c(1, 1))
-generate_initial_population <- function(population, data, inputs, output, costs) {
+#' pop <- population(pop_size = 2, num_features = 2, objective = "DIST-EPS")
+#' pop <- generate_initial_population(pop, data, c("x1", "x2"), "y")
+generate_initial_population <- function(population, data, inputs, output) {
   message(sprintf("Creating initial population of size %d", population$pop_size))
   num_sol <- 0
 
   while (length(population$solution_list) < population$pop_size) {
     # Create and generate a random solution
-    sol <- Solution(num_sol, population$num_features, population$objective)
+    sol <- solution(num_sol, population$num_features, population$objective)
     sol <- generate_random_solution(sol, data, inputs, output)
     sol <- evaluate_solution(sol, data, output)
 
@@ -105,7 +104,7 @@ generate_initial_population <- function(population, data, inputs, output, costs)
 #' @description
 #'   This function prints the population.
 #'
-#' @param population Population class object
+#' @param population population class object
 #'
 #' @return Prints the population in the console
 #'
@@ -117,8 +116,8 @@ generate_initial_population <- function(population, data, inputs, output, costs)
 #'   x1 = rnorm(20), x2 = rnorm(20),
 #'   y = sample(c(-1, 1), 20, replace = TRUE)
 #' )
-#' pop <- Population(pop_size = 2, num_features = 2, objective = "DIST-EPS")
-#' pop <- generate_initial_population(pop, data, c("x1", "x2"), "y", c(1, 1))
+#' pop <- population(pop_size = 2, num_features = 2, objective = "DIST-EPS")
+#' pop <- generate_initial_population(pop, data, c("x1", "x2"), "y")
 #' pop <- fnds(pop)
 #' print_population(pop)
 print_population <- function(population) {
@@ -151,8 +150,8 @@ print_population <- function(population) {
 #' @description
 #'   This function checks if a solution already exists in the solution list to avoid duplicates.
 #'
-#' @param population Population
-#' @param solution_eva Solution object to be evaluated for duplication
+#' @param population population
+#' @param solution_eva solution object to be evaluated for duplication
 #'
 #' @return 1 if a clone is found, otherwise 0
 #'
@@ -164,8 +163,8 @@ print_population <- function(population) {
 #'   x1 = rnorm(20), x2 = rnorm(20),
 #'   y = sample(c(-1, 1), 20, replace = TRUE)
 #' )
-#' pop <- Population(pop_size = 2, num_features = 2, objective = "DIST-EPS")
-#' pop <- generate_initial_population(pop, data, c("x1", "x2"), "y", c(1, 1))
+#' pop <- population(pop_size = 2, num_features = 2, objective = "DIST-EPS")
+#' pop <- generate_initial_population(pop, data, c("x1", "x2"), "y")
 #' sol <- pop$solution_list[[1]]
 #' clone_res <- check_clones(pop, sol)
 check_clones <- function(population, solution_eva) {
@@ -206,9 +205,9 @@ check_clones <- function(population, solution_eva) {
 #' @description
 #'   This function performs the Fast Non-Dominated Sorting on a given population.
 #'
-#' @param population Population class object
+#' @param population population class object
 #'
-#' @return Updated Population class object with sorted fronts
+#' @return Updated population class object with sorted fronts
 #'
 #' @export
 #'
@@ -218,8 +217,8 @@ check_clones <- function(population, solution_eva) {
 #'   x1 = rnorm(20), x2 = rnorm(20),
 #'   y = sample(c(-1, 1), 20, replace = TRUE)
 #' )
-#' pop <- Population(pop_size = 2, num_features = 2, objective = "DIST-EPS")
-#' pop <- generate_initial_population(pop, data, c("x1", "x2"), "y", c(1, 1))
+#' pop <- population(pop_size = 2, num_features = 2, objective = "DIST-EPS")
+#' pop <- generate_initial_population(pop, data, c("x1", "x2"), "y")
 #' pop <- fnds(pop)
 fnds <- function(population) {
   pop_size <- length(population$solution_list)
@@ -289,7 +288,7 @@ fnds <- function(population) {
 #' @description
 #'   This function selects a parent solution from the population using tournament selection.
 #'
-#' @param population Population class object
+#' @param population population class object
 #'
 #' @return Selected parent solution
 #'
@@ -301,8 +300,8 @@ fnds <- function(population) {
 #'   x1 = rnorm(20), x2 = rnorm(20),
 #'   y = sample(c(-1, 1), 20, replace = TRUE)
 #' )
-#' pop <- Population(pop_size = 4, num_features = 2, objective = "DIST-EPS")
-#' pop <- generate_initial_population(pop, data, c("x1", "x2"), "y", c(1, 1))
+#' pop <- population(pop_size = 4, num_features = 2, objective = "DIST-EPS")
+#' pop <- generate_initial_population(pop, data, c("x1", "x2"), "y")
 #' pop <- fnds(pop)
 #' parent <- tournament_select_parent(pop)
 tournament_select_parent <- function(population) {
@@ -325,18 +324,17 @@ tournament_select_parent <- function(population) {
 
 
 
-#' @title Crossover Solutions
+#' @title Crossover solutions
 #'
 #' @description
 #'   This function performs crossover between two parent solutions to create offspring.
 #'
-#' @param population Population class object
+#' @param population population class object
 #' @param parent First parent solution
 #' @param mother Second parent solution
 #' @param num Unique identifier for the new solutions
 #' @param data A data.frame with the input features
 #' @param output A vector with class labels
-#' @param costs A vector with feature costs //¿Lo quitamos?
 #'
 #' @importFrom stats runif
 #'
@@ -350,34 +348,34 @@ tournament_select_parent <- function(population) {
 #'   x1 = rnorm(20), x2 = rnorm(20),
 #'   y = sample(c(-1, 1), 20, replace = TRUE)
 #' )
-#' pop <- Population(pop_size = 4, num_features = 2, objective = "DIST-EPS")
-#' pop <- generate_initial_population(pop, data, c("x1", "x2"), "y", c(1, 1))
+#' pop <- population(pop_size = 4, num_features = 2, objective = "DIST-EPS")
+#' pop <- generate_initial_population(pop, data, c("x1", "x2"), "y")
 #' pop <- fnds(pop)
 #' parent1 <- tournament_select_parent(pop)
 #' parent2 <- tournament_select_parent(pop)
-#' offspring <- crossover_solutions(pop, parent1, parent2, 5, data, "y", c(1, 1))
-crossover_solutions <- function(population, parent, mother, num, data, output, costs) {
+#' offspring <- crossover_solutions(pop, parent1, parent2, 5, data, "y")
+crossover_solutions <- function(population, parent, mother, num, data, output) {
   # Create four offspring solutions using crossover from the parents
   # First child: father's features and coordinates, father's first vector and mother's second vector
-  child <- Solution(num, population$num_features, population$objective)
+  child <- solution(num, population$num_features, population$objective)
   child$features <- parent$features
   child$plane_coord <- parent$plane_coord
   child$vectors <- list(parent$vectors[[1]], mother$vectors[[2]])
 
   # Second child: mother's features and coordinates, father's first vector and mother's second vector
-  child1 <- Solution(num, population$num_features, population$objective)
+  child1 <- solution(num, population$num_features, population$objective)
   child1$features <- mother$features
   child1$plane_coord <- mother$plane_coord
   child1$vectors <- list(parent$vectors[[1]], mother$vectors[[2]])
 
   # Third child: father's features and coordinates, mother's first vector and father's second vector
-  child2 <- Solution(num, population$num_features, population$objective)
+  child2 <- solution(num, population$num_features, population$objective)
   child2$features <- parent$features
   child2$plane_coord <- parent$plane_coord
   child2$vectors <- list(mother$vectors[[1]], parent$vectors[[2]])
 
   # Fourth child: mother's features and coordinates, mother's first vector and father's second vector
-  child3 <- Solution(num, population$num_features, population$objective)
+  child3 <- solution(num, population$num_features, population$objective)
   child3$features <- mother$features
   child3$plane_coord <- mother$plane_coord
   child3$vectors <- list(mother$vectors[[1]], parent$vectors[[2]])
@@ -428,16 +426,16 @@ crossover_solutions <- function(population, parent, mother, num, data, output, c
 #' @param child1 The first offspring to compare.
 #' @param child2 The second offspring to compare.
 #'
-#' @return List[Solution][Solution]
+#' @return List[solution][solution]
 #'   A list with two solutions, where the first one is the better offspring (the winner), and the second one
 #'   is the inferior offspring (the loser).
 #'
 #' @export
 #'
 #' @examples
-#' sol1 <- Solution(num = 1, num_features = 2, obj = "DIST-EPS")
+#' sol1 <- solution(num = 1, num_features = 2, obj = "DIST-EPS")
 #' sol1$objective <- c(1, 0, 0, 0)
-#' sol2 <- Solution(num = 2, num_features = 2, obj = "DIST-EPS")
+#' sol2 <- solution(num = 2, num_features = 2, obj = "DIST-EPS")
 #' sol2$objective <- c(0, 1, 1, 1)
 #' best_offspring <- select_best_offspring(sol1, sol2)
 select_best_offspring <- function(child1, child2) {
@@ -456,20 +454,19 @@ select_best_offspring <- function(child1, child2) {
 }
 
 
-#' @title Create New Population
+#' @title Create New population
 #'
 #' @description
 #'   This function creates a new population through crossover.
 #'
-#' @param population Population class object
+#' @param population population class object
 #' @param data A data.frame with the input features
 #' @param inputs A vector of input features
 #' @param output A vector with class labels
-#' @param costs A vector with feature costs //¿Lo quitamos?
 #'
 #' @importFrom stats runif
 #'
-#' @return Updated Population class object with the new population generated
+#' @return Updated population class object with the new population generated
 #'
 #' @export
 #'
@@ -479,11 +476,11 @@ select_best_offspring <- function(child1, child2) {
 #'   x1 = rnorm(20), x2 = rnorm(20),
 #'   y = sample(c(-1, 1), 20, replace = TRUE)
 #' )
-#' pop <- Population(pop_size = 2, num_features = 2, objective = "DIST-EPS")
-#' pop <- generate_initial_population(pop, data, c("x1", "x2"), "y", c(1, 1))
+#' pop <- population(pop_size = 2, num_features = 2, objective = "DIST-EPS")
+#' pop <- generate_initial_population(pop, data, c("x1", "x2"), "y")
 #' pop <- fnds(pop)
-#' pop_new <- new_population(pop, data, c("x1", "x2"), "y", c(1, 1))
-new_population <- function(population, data, inputs, output, costs) {
+#' pop_new <- new_population(pop, data, c("x1", "x2"), "y")
+new_population <- function(population, data, inputs, output) {
   i <- population$pop_size
 
   while (length(population$solution_list) < 2 * population$pop_size) {
@@ -493,7 +490,7 @@ new_population <- function(population, data, inputs, output, costs) {
       mother <- tournament_select_parent(population)
     }
 
-    offspring <- crossover_solutions(population, parent, mother, i, data, output, costs)
+    offspring <- crossover_solutions(population, parent, mother, i, data, output)
     for (child in offspring) {
       if (length(population$solution_list) >= 2 * population$pop_size) {
         break  # Avoid adding more children if the maximum size is reached
@@ -524,13 +521,13 @@ new_population <- function(population, data, inputs, output, costs) {
 
 
 
-#' @title Mutate Solution
+#' @title Mutate solution
 #'
 #' @description
 #'   This function mutates a solution based on mutation probabilities and coordinates.
 #'
-#' @param solution Solution object to mutate
-#' @param population Population class object that contains mutation parameters
+#' @param solution solution object to mutate
+#' @param population population class object that contains mutation parameters
 #' @param data A data.frame with the input features
 #' @param inputs A vector of input features
 #' @param output A vector with class labels
@@ -547,8 +544,8 @@ new_population <- function(population, data, inputs, output, costs) {
 #'   x2 = c(1, 1, 2, 6, 5, 6),
 #'   y = c(-1, -1, -1, 1, 1, 1)
 #' )
-#' pop <- Population(pop_size = 2, num_features = 2, objective = "DIST-EPS")
-#' sol <- Solution(num = 1, num_features = 2, obj = "DIST-EPS")
+#' pop <- population(pop_size = 2, num_features = 2, objective = "DIST-EPS")
+#' sol <- solution(num = 1, num_features = 2, obj = "DIST-EPS")
 #' sol <- generate_random_solution(sol, data, c("x1", "x2"), "y")
 #' mut_sol <- mutate_solution(sol, pop, data, c("x1", "x2"), "y")
 mutate_solution <- function(solution, population, data, inputs, output) {
@@ -600,14 +597,14 @@ mutate_solution <- function(solution, population, data, inputs, output) {
 
 
 
-#' @title Reduce Population Size
+#' @title Reduce population Size
 #'
 #' @description
 #'   This function reduces the population size based on fronts and crowding distance.
 #'
-#' @param population Population class object to reduce
+#' @param population population class object to reduce
 #'
-#' @return Reduced Population class object
+#' @return Reduced population class object
 #'
 #' @export
 #'
@@ -617,17 +614,17 @@ mutate_solution <- function(solution, population, data, inputs, output) {
 #'   x1 = rnorm(20), x2 = rnorm(20),
 #'   y = sample(c(-1, 1), 20, replace = TRUE)
 #' )
-#' pop <- Population(pop_size = 5, num_features = 2, objective = "DIST-EPS")
-#' pop <- generate_initial_population(pop, data, c("x1", "x2"), "y", c(1, 1))
+#' pop <- population(pop_size = 5, num_features = 2, objective = "DIST-EPS")
+#' pop <- generate_initial_population(pop, data, c("x1", "x2"), "y")
 #' pop <- fnds(pop)
 #' # Create a larger population to reduce
-#' pop <- new_population(pop, data, c("x1", "x2"), "y", c(1, 1))
+#' pop <- new_population(pop, data, c("x1", "x2"), "y")
 #' pop <- fnds(pop)
 #' pop_reduced <- reduce_population(pop)
 reduce_population <- function(population) {
   # Create new empty population
   cat("Creating new population with", population$num_fea, "features\n")
-  new_population <- Population(pop_size = population$pop_size,
+  new_population <- population(pop_size = population$pop_size,
                                num_features = population$num_fea,
                                objective = population$objective)
 
@@ -669,7 +666,7 @@ reduce_population <- function(population) {
 #' @description
 #'   This function calculates the crowding distance for solutions in a specified front.
 #'
-#' @param population Population class object
+#' @param population population class object
 #' @param num_front The front number to calculate the crowding distance for
 #'
 #' @return List of solutions with updated crowding distances
@@ -682,8 +679,8 @@ reduce_population <- function(population) {
 #'   x1 = rnorm(20), x2 = rnorm(20),
 #'   y = sample(c(-1, 1), 20, replace = TRUE)
 #' )
-#' pop <- Population(pop_size = 4, num_features = 2, objective = "DIST-EPS")
-#' pop <- generate_initial_population(pop, data, c("x1", "x2"), "y", c(1, 1))
+#' pop <- population(pop_size = 4, num_features = 2, objective = "DIST-EPS")
+#' pop <- generate_initial_population(pop, data, c("x1", "x2"), "y")
 #' pop <- fnds(pop)
 #' crowd_sols <- crowding_distance(pop, num_front = 1)
 crowding_distance <- function(population, num_front) {
