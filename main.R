@@ -48,6 +48,7 @@ population_size <- 10
 num_features    <- 5
 iter_type       <- "iters"
 iter_val        <- 5
+normalize       <- TRUE
 
 # Advanced Population parameters (using library defaults)
 num_obj         <- 2
@@ -87,12 +88,26 @@ output_col <- names(data)[1]
 input_cols <- names(data)[-1]
 
 
-# 4. Binary Classification target check.
+# 3. Binary Classification target check.
 # The current SVM implementation requires binary labels (e.g., -1 and 1).
 # We filter the dataset to ensure only these two classes are present.
 data <- data[data[[output_col]] %in% c(-1, 1), ]
 
-message(glue::glue("Dataset prepared: {nrow(data)} rows and {ncol(data)} columns"))
+# 4. Normalize input features (Min-Max scaling to [0, 1]).
+# Normalization is performed outside the library.
+if (normalize) {
+  scaler <- function(x) {
+    rng <- range(x, na.rm = TRUE)
+    if (rng[1] == rng[2]) return(rep(0.5, length(x)))
+    return((x - rng[1]) / (rng[2] - rng[1]))
+  }
+  data_scaled <- data
+  data_scaled[, input_cols] <- as.data.frame(lapply(data[, input_cols], scaler))
+} else {
+  data_scaled <- data
+}
+
+message(glue::glue("Dataset prepared: {nrow(data_scaled)} rows and {ncol(data_scaled)} columns"))
 
 # ===== Load svm_fs_meta package =====
 # load_all() is used during development to simulate loading the installed package.
@@ -101,7 +116,7 @@ library(svmfsmeta)
 
 # ===== Algorithm execution =====
 # The simulate() helper function wraps the svm_fs_meta object creation and run.svm_fs_meta() call.
-result <- simulate(method, data, population_size, input_cols, output_col, num_features, iter_type, iter_val,
+result <- simulate(method, data_scaled, population_size, input_cols, output_col, num_features, iter_type, iter_val,
                    num_obj, clones, p_mutation, p_mut_ind, p_mut_fea, p_mut_coord, mut_coord)
 
 # ===== Result Export and Visualization =====

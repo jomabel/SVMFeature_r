@@ -21,7 +21,7 @@ To install the development version from GitHub:
 
 ```r
 # install.packages("devtools")
-devtools::install_github("ajbanegas/SVMFeature")
+devtools::install_github("jomabel/SVMFeature_r")
 ```
 
 ## 💻 Basic Usage
@@ -36,19 +36,25 @@ library(readr)
 dataset_file <- "data/09Colon_p.txt"
 data <- as.data.frame(read_delim(dataset_file, delim = ";", col_names = FALSE, show_col_types = FALSE))
 
-# 2. Preprocess: drop index, rename columns, extract costs, and filter binary labels
+# 2. Preprocess: drop index, rename columns, and filter binary labels
 data <- data[,-1]
 names(data) <- c("y", paste0("x", 1:(ncol(data)-1)))
-costs <- as.numeric(data[1, -1])
-data  <- data[-1, ]
-data  <- data[data$y %in% c(-1, 1), ]
+data <- data[data$y %in% c(-1, 1), ]
 
-# 3. Initialize and run the optimizer
+# 3. Normalize input features (Min-Max scaling to [0, 1])
+input_cols <- names(data)[-1]
+scaler <- function(x) {
+  rng <- range(x, na.rm = TRUE)
+  if (rng[1] == rng[2]) return(rep(0.5, length(x)))
+  (x - rng[1]) / (rng[2] - rng[1])
+}
+data[, input_cols] <- as.data.frame(lapply(data[, input_cols], scaler))
+
+# 4. Initialize and run the optimizer
 obj <- svm_fs_meta(
   data = data,
   inputs = names(data)[-1],
   output = "y",
-  costs = costs,
   pop_size = 10,
   num_fea = 5,
   n_iter = 10,
@@ -56,10 +62,10 @@ obj <- svm_fs_meta(
   objective = "DIST-EPS"
 )
 
-# 4. Execute optimization
+# 5. Execute optimization
 result <- run.svm_fs_meta(obj)
 
-# 5. Visualize and Save
+# 6. Visualize and Save
 draw_solution(result)
 save_results(result, dataset_name = "09Colon_p")
 ```
@@ -77,7 +83,6 @@ Initializes the optimization object.
 | `data` | `data.frame` | - | The dataset containing features and target column. |
 | `inputs` | `vector` | - | Names of the input feature columns. |
 | `output` | `character` | - | Name of the target (class) column. |
-| `costs` | `numeric` | - | Costs associated with each feature. |
 | `pop_size` | `numeric` | - | Size of the population. |
 | `num_fea` | `numeric` | - | Maximum number of features to select. |
 | `objective` | `character` | `"DIST-EPS"` | Objectives: `"DIST-EPS"` or `"MC"`. |
@@ -88,7 +93,8 @@ Initializes the optimization object.
 | `p_mutation` | `numeric` | `0.7` | Global mutation probability. |
 | `p_mut_ind` | `numeric` | `0.4` | Probability of mutating an individual. |
 | `p_mut_fea` | `numeric` | `0.4` | Probability of mutating a feature selection. |
-| `p_mut_coord` | `numeric` | `0.2` | Probability of mutating hyperplane coordinates. |
+| `p_mut_coord` | `numeric` | `0.2` | Probability of mutating hyperplane coordinates. |
+| `mut_coord` | `numeric` | `0` | Mutation strategy on coordinates (0: Scaling, 1: Full replacement). |
 
 ### `run.svm_fs_meta(object)`
 Starts the optimization process (NSGA-II).

@@ -57,20 +57,9 @@ svm_fs_meta <- function(data, inputs, output, pop_size, num_fea,
   if (!objective %in% c("DIST-EPS", "MC"))
     stop('Error: "objective" must be either "DIST-EPS" or "MC"')
 
-  # Normalization function  <- ¿Esto debería ser obligatorio?
-  scaler <- function(x) {
-    rng <- range(x, na.rm = TRUE)
-    if (rng[1] == rng[2]) return(rep(0.5, length(x)))
-    return((x - rng[1]) / (rng[2] - rng[1]))
-  }
-
-  # Normalize input data
-  norm_data <- as.data.frame(lapply(data[, inputs], scaler))
-  norm_data[[output]] <- data[[output]]
-
   # Create the S3 object (a list with attributes)
   object <- list(
-    data = norm_data,
+    data = data,
     inputs = inputs,
     output = output,
     pop_size = pop_size,

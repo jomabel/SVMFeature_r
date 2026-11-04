@@ -75,8 +75,17 @@ data <- data[,-1]
 num_cols <- ncol(data)
 names(data) <- c("y", paste0("x", 1:(num_cols-1)))
 
-# 5. Filter for binary classification labels (-1 and 1)
+# 4. Filter for binary classification labels (-1 and 1)
 data <- data[data$y %in% c(-1, 1), ]
+
+# 5. Normalize input features (Min-Max scaling to [0, 1])
+input_cols <- names(data)[-1]
+scaler <- function(x) {
+  rng <- range(x, na.rm = TRUE)
+  if (rng[1] == rng[2]) return(rep(0.5, length(x)))
+  (x - rng[1]) / (rng[2] - rng[1])
+}
+data[, input_cols] <- as.data.frame(lapply(data[, input_cols], scaler))
 ```
 
 ### 2. Running the NSGA-II Simulation
