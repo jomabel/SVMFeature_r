@@ -67,7 +67,7 @@ result <- run.svm_fs_meta(obj)
 
 # 6. Visualize and Save
 draw_solution(result)
-save_results(result, dataset_name = "09Colon_p")
+save_results(result, output_dir = tempdir(), dataset_name = "09Colon_p")
 ```
 
 ---
@@ -102,7 +102,7 @@ Starts the optimization process (NSGA-II).
 ### `draw_solution(x)`
 Generates a `ggplot2` scatter plot of the Pareto front (Front 1).
 
-### `save_results(object, output_dir="results", dataset_name="dataset")`
+### `save_results(object, output_dir, dataset_name="dataset")`
 Exports the Pareto front to a CSV file.
 
 ## 👥 Authors

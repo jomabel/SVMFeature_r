@@ -26,16 +26,16 @@ The `svm_fs_meta` package implements various methods for SVM feature selection, 
 
 ## Installation
 
-You can install the `svm_fs_meta` package from CRAN using the following command:
+You can install the `svmfsmeta` package from CRAN using the following command:
 
 ```r
-install.packages("svm_fs_meta")
+install.packages("svmfsmeta")
 ```
 
 Alternatively, you can install the development version of the package from GitHub:
 
 ```r
-devtools::install_github("ajbanegas/svm_fs_meta")
+devtools::install_github("jomabel/SVMFeature_r")
 ```
 
 ## Example Datasets
@@ -139,7 +139,7 @@ The Pareto front solutions can be saved to a CSV file.
 
 ```r
 # Export non-dominated solutions
-save_results(result, dataset_name = "09Colon_p")
+save_results(result, output_dir = tempdir(), dataset_name = "09Colon_p")
 ```
 
 ## Conclusion
