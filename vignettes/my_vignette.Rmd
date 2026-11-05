@@ -20,9 +20,31 @@ This vignette provides a comprehensive overview of the functionalities offered b
 
 ## Introduction
 
-Support vector machines are a popular machine learning algorithm used for classification and regression tasks. Feature selection is an essential step in building effective SVM models, as it helps to improve model performance by selecting the most relevant features.
+Support Vector Machines (SVMs) are widely used supervised learning methods for binary classification problems. Their performance depends
+on identifying a suitable separating hyperplane, typically balancing the maximization of the classification margin and the minimization
+of classification errors. Additionally, feature selection can improve model interpretability and reduce computational complexity by
+identifying a subset of relevant features.
 
-The `svm_fs_meta` package implements various methods for SVM feature selection, allowing users to preprocess their datasets and identify the most important features for their models.
+The integration of feature selection into SVM models introduces additional computational challenges, particularly when multiple
+conflicting objectives are considered. Multi-objective optimization provides a framework for addressing these trade-offs by generating
+a set of non-dominated solutions, known as the **Pareto front**, where each solution represents an alternative classifier.
+
+The `svmfsmeta` package implements a multi-objective approach to SVM classification with feature selection, based on the methodologies
+studied by Valero-Carreras et al. (2023) and Alcaraz,J. (2024). The package employs a metaheuristic based on the **Non-dominated Sorting Genetic Algorithm II
+(NSGA-II)** to approximate the Pareto front and supports two alternative optimization formulations:
+
+- **`DIST-EPS`**: The classical soft-margin SVM approach, which considers the classification margin and the magnitude of
+  classification errors as optimization objectives.
+
+- **`confusion-matrix`**: An alternative formulation that independently minimizes the number of false positives and false negatives,
+  allowing different trade-offs between both types of classification errors.
+
+By treating these objectives separately, the package generates multiple candidate classifiers, enabling users to explore different
+compromises between classification performance and feature selection. These solutions can subsequently be compared using performance
+metrics derived from the confusion matrix, such as the Area Under the ROC Curve (AUC), the F-score, and Cohen's Kappa coefficient.
+
+This vignette demonstrates the main functionalities of `svmfsmeta`, including data preparation, configuration of the optimization algorithm, generation and visualization of Pareto-optimal solutions,
+and export of the results.
 
 ## Installation
 
