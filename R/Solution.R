@@ -379,6 +379,13 @@ calculate_epsilon_objective <- function(solution, data, output) {
 #'   recall, F1-score, Cohen's kappa, AUC, and the confusion matrix. The results are stored
 #'   as fields in the provided solution object.
 #'
+#' @details
+#'   Unweighted Cohen's kappa is computed as
+#'   \eqn{\kappa = (p_o - p_e) / (1 - p_e)}, where \eqn{p_o} is the observed
+#'   agreement and \eqn{p_e} is the chance agreement from the class marginals.
+#'   Only the point estimate is calculated. Kappa is \code{NA_real_} when
+#'   there are no observations or the expected chance agreement is one.
+#'
 #' @param solution A solution class object where the metrics will be stored
 #' @param y_true A vector of true class labels (-1 or 1)
 #' @param y_pred A vector of predicted class labels (-1 or 1)
@@ -390,7 +397,7 @@ calculate_epsilon_objective <- function(solution, data, output) {
 #'   \item{precision}{Precision}
 #'   \item{recall}{Recall}
 #'   \item{f1}{F1 score}
-#'   \item{kappa}{Cohen's kappa statistic}
+#'   \item{kappa}{Unweighted Cohen's kappa statistic, or \code{NA_real_} if undefined}
 #'   \item{auc}{Area Under the ROC Curve (AUC)}
 #'
 #' @export
@@ -420,8 +427,18 @@ calculate_metrics <- function(solution, y_true, y_pred, decision_scores){
     2 * solution$precision * solution$recall / f1_denominator
   }
 
-  # Cohen Kappa
-  solution$kappa <- psych::cohen.kappa(solution$conf_matrix)$kappa
+  # Cohen's kappa from observed and chance agreement.
+  n_observations <- sum(solution$conf_matrix)
+  solution$kappa <- NA_real_
+  if (n_observations > 0) {
+    proportions <- solution$conf_matrix / n_observations
+    observed_agreement <- sum(diag(proportions))
+    expected_agreement <- sum(rowSums(proportions) * colSums(proportions))
+    if (expected_agreement < 1) {
+      solution$kappa <- (observed_agreement - expected_agreement) /
+        (1 - expected_agreement)
+    }
+  }
 
   # AUC
   solution$auc <- Metrics::auc(y_true_bin, decision_scores)
