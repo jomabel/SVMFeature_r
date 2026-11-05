@@ -413,7 +413,12 @@ calculate_metrics <- function(solution, y_true, y_pred, decision_scores){
   # Precision, Recall, F1 (for positive class = 1)
   solution$precision <- Metrics::precision(y_true_bin, y_pred_bin)
   solution$recall <- Metrics::recall(y_true_bin, y_pred_bin)
-  solution$f1 <- ifelse(is.na(solution$precision) | is.na(solution$recall), 0, 2 * solution$precision * solution$recall / (solution$precision + solution$recall))
+  f1_denominator <- solution$precision + solution$recall
+  solution$f1 <- if (is.na(f1_denominator) || f1_denominator == 0) {
+    0
+  } else {
+    2 * solution$precision * solution$recall / f1_denominator
+  }
 
   # Cohen Kappa
   solution$kappa <- psych::cohen.kappa(solution$conf_matrix)$kappa
