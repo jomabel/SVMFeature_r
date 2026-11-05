@@ -602,6 +602,11 @@ mutate_solution <- function(solution, population, data, inputs, output) {
 #' @description
 #'   This function reduces the population size based on fronts and crowding distance.
 #'
+#' @details
+#'   The returned population retains the input population's optimization settings.
+#'   Its fronts and cached solution summaries are cleared for recalculation
+#'   after selection.
+#'
 #' @param population population class object to reduce
 #'
 #' @return Reduced population class object
@@ -622,11 +627,20 @@ mutate_solution <- function(solution, population, data, inputs, output) {
 #' pop <- fnds(pop)
 #' pop_reduced <- reduce_population(pop)
 reduce_population <- function(population) {
-  # Create new empty population
-  cat("Creating new population with", population$num_fea, "features\n")
-  new_population <- population(pop_size = population$pop_size,
-                               num_features = population$num_fea,
-                               objective = population$objective)
+  # Create an empty population with the same optimization settings.
+  cat("Creating new population with", population$num_features, "features\n")
+  new_population <- population(
+    pop_size = population$pop_size,
+    num_features = population$num_features,
+    num_obj = population$num_obj,
+    clones = population$clones,
+    p_mutation = population$p_mutation,
+    p_mut_ind = population$p_mut_ind,
+    p_mut_fea = population$p_mut_fea,
+    p_mut_coord = population$p_mut_coord,
+    mut_coord = population$mut_coord,
+    objective = population$objective
+  )
 
   # Front counter
   front_counter <- 1
