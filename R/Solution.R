@@ -452,6 +452,13 @@ calculate_metrics <- function(solution, y_true, y_pred, decision_scores){
 #' @description
 #'   This function evaluates a solution by calculating its objectives.
 #'
+#' @details
+#'   Normal coordinates must be a non-empty vector of finite real numbers,
+#'   with one coefficient per selected feature. Their computed squared
+#'   Euclidean norm must be finite and strictly positive. Nonzero normals
+#'   remain valid when their coefficients sum to zero. Invalid normals return
+#'   the solution with \code{successful_evaluation = FALSE}.
+#'
 #' @param solution solution class object to be evaluated
 #' @param data A data.frame with the input features
 #' @param output A vector with class labels
@@ -466,9 +473,19 @@ calculate_metrics <- function(solution, y_true, y_pred, decision_scores){
 #' sol <- generate_random_solution(sol, data, c("x1", "x2"), "y")
 #' sol <- evaluate_solution(sol, data, "y")
 evaluate_solution <- function(solution, data, output) {
-  # Verify if the sum of plane_coord is zero
-  if (sum(solution$plane_coord) == 0) {
-    message("The solution cannot be evaluated, there are no coordinates.")
+  normal_coordinates <- solution$plane_coord
+  valid_coordinates <- is.numeric(normal_coordinates) &&
+    !is.complex(normal_coordinates) && is.null(dim(normal_coordinates)) &&
+    length(normal_coordinates) > 0L &&
+    length(normal_coordinates) == length(solution$features) &&
+    all(is.finite(normal_coordinates))
+  squared_norm <- if (valid_coordinates) sum(normal_coordinates^2) else NA_real_
+
+  if (!is.finite(squared_norm) || squared_norm <= 0) {
+    message(paste0(
+      "The solution cannot be evaluated: the normal must have one finite real ",
+      "coefficient per selected feature and a positive finite squared norm."
+    ))
     solution$successful_evaluation <- FALSE
     return(solution)
   } else {
