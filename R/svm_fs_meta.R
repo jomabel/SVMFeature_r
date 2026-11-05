@@ -10,22 +10,38 @@ library(dplyr)
 #'
 #' Implements a feature selection algorithm using Support Vector Machines (SVM).
 #'
-#' @param data DataFrame. The input data.
-#' @param inputs Character vector. The names of the input features.
-#' @param output Character. The name of the output variable.
-#' @param pop_size Numeric. The population size.
-#' @param num_fea Numeric. The number of features.
-#' @param n_iter Numeric. The number of iterations (default: 10).
-#' @param max_time Numeric. The maximum execution time (default: 300 seconds).
+#' @param data A non-empty data frame with unique, non-empty column names.
+#' @param inputs A non-empty character vector of unique predictor column names.
+#'   Selected predictors must be real numeric vectors with finite values and
+#'   must not include the response column.
+#' @param output A single response column name. The response must be numeric,
+#'   contain only -1 and 1, and have at least two observations of each class.
+#' @param pop_size A single finite integer of at least 3. The population size.
+#' @param num_fea A single positive integer, no larger than the number of inputs.
+#' @param n_iter A single positive finite integer. Number of iterations
+#'   (default: 10).
+#' @param max_time A single positive finite number. Maximum execution time
+#'   in seconds (default: 300).
 #' @param mode Character. "iters" for iteration-based execution, "time" for time-based execution.
 #' @param objective Character. "DIST-EPS" or "MC".
-#' @param num_obj Numeric. Number of objectives (default: 2).
-#' @param clones Numeric. Number of clones (default: 0).
-#' @param p_mutation Numeric. Mutation probability (default: 0.7).
-#' @param p_mut_ind Numeric. Individual mutation probability (default: 0.4).
-#' @param p_mut_fea Numeric. Feature mutation probability (default: 0.4).
-#' @param p_mut_coord Numeric. Mutation coordinates probability (default: 0.2).
-#' @param mut_coord Numeric. Mutation coordinates (default: 0).
+#' @param num_obj Number of objectives. Must be 2 for either formulation.
+#' @param clones A single 0/1 flag for the clone option (default: 0).
+#'   Logical values are also accepted.
+#' @param p_mutation A single finite mutation probability in `[0, 1]`
+#'   (default: 0.7).
+#' @param p_mut_ind A single finite individual mutation probability in `[0, 1]`
+#'   (default: 0.4).
+#' @param p_mut_fea A single finite feature mutation probability in `[0, 1]`
+#'   (default: 0.4).
+#' @param p_mut_coord A single finite coordinate mutation probability in `[0, 1]`
+#'   (default: 0.2).
+#' @param mut_coord A single 0/1 flag for the coordinate mutation strategy
+#'   (default: 0). Logical values are also accepted.
+#' @details
+#'   The current evolutionary operators require at least three individuals and
+#'   two observations in each response class. Data-frame subclasses are converted
+#'   locally to a base data frame. Columns outside the selected inputs and output
+#'   are not used and need not be numeric or complete.
 #' @return An S3 object of class "svm_fs_meta".
 #' @export
 #'
@@ -46,16 +62,100 @@ svm_fs_meta <- function(data, inputs, output, pop_size, num_fea,
                        num_obj = 2, clones = 0, p_mutation = 0.7, p_mut_ind = 0.4,
                        p_mut_fea = 0.4, p_mut_coord = 0.2, mut_coord = 0) {
 
-  if (!is.data.frame(data)) stop('Error: "data" must be a data frame')
-  if (!mode %in% c("iters", "time")) stop('Error: "mode" must be either "iters" or "time"')
-  if (!is.character(inputs) || !all(inputs %in% colnames(data))) stop('Error: "inputs" must be a character vector of existing column names in "data"')
-  if (!is.character(output) || length(output) != 1 || !(output %in% colnames(data))) stop('Error: "output" must be a single column name in "data"')
-  if (!is.numeric(max_time) || max_time <= 0) stop('Error: "max_time" must be a positive number')
-  if (!is.numeric(n_iter) || n_iter <= 0) stop('Error: "n_iter" must be a positive number')
-  if (!is.numeric(pop_size) || pop_size <= 0) stop('Error: "pop_size" must be a positive number')
-  if (!is.numeric(num_fea) || num_fea <= 0) stop('Error: "num_fea" must be a positive number')
-  if (!objective %in% c("DIST-EPS", "MC"))
-    stop('Error: "objective" must be either "DIST-EPS" or "MC"')
+  is_scalar_number <- function(value) {
+    is.numeric(value) && !is.complex(value) && is.null(dim(value)) &&
+      length(value) == 1L && is.finite(value)
+  }
+  is_scalar_choice <- function(value, choices) {
+    is.character(value) && is.null(dim(value)) && length(value) == 1L &&
+      !is.na(value) && value %in% choices
+  }
+  is_finite_numeric_vector <- function(value) {
+    is.numeric(value) && !is.complex(value) && is.null(dim(value)) &&
+      all(is.finite(value))
+  }
+
+  if (!is.data.frame(data)) {
+    stop('"data" must be a data frame.', call. = FALSE)
+  }
+  data <- as.data.frame(data)
+  if (nrow(data) == 0L || ncol(data) == 0L) {
+    stop('"data" must contain at least one row and one column.', call. = FALSE)
+  }
+  if (anyNA(names(data)) || any(!nzchar(names(data))) || anyDuplicated(names(data))) {
+    stop('"data" must have unique, non-empty column names.', call. = FALSE)
+  }
+  if (!is_scalar_choice(mode, c("iters", "time"))) {
+    stop('"mode" must be either "iters" or "time".', call. = FALSE)
+  }
+  if (!is.character(inputs) || !is.null(dim(inputs)) || length(inputs) == 0L ||
+      anyNA(inputs) || any(!nzchar(inputs)) || anyDuplicated(inputs) ||
+      !all(inputs %in% names(data))) {
+    stop('"inputs" must be a non-empty character vector of unique existing column names in "data".',
+         call. = FALSE)
+  }
+  if (!is_scalar_choice(output, names(data))) {
+    stop('"output" must name a single column in "data".', call. = FALSE)
+  }
+  if (output %in% inputs) {
+    stop('"inputs" must not include "output".', call. = FALSE)
+  }
+
+  counts <- list(pop_size = pop_size, num_fea = num_fea, n_iter = n_iter)
+  minimums <- c(pop_size = 3, num_fea = 1, n_iter = 1)
+  for (parameter in names(counts)) {
+    value <- counts[[parameter]]
+    if (!is_scalar_number(value) || value != floor(value) || value < minimums[[parameter]]) {
+      stop(sprintf('"%s" must be a finite integer greater than or equal to %d.',
+                   parameter, minimums[[parameter]]), call. = FALSE)
+    }
+  }
+  if (num_fea > length(inputs)) {
+    stop('"num_fea" must not exceed the number of "inputs".', call. = FALSE)
+  }
+  if (!is_scalar_number(max_time) || max_time <= 0) {
+    stop('"max_time" must be a positive finite number.', call. = FALSE)
+  }
+  if (!is_scalar_choice(objective, c("DIST-EPS", "MC"))) {
+    stop('"objective" must be either "DIST-EPS" or "MC".', call. = FALSE)
+  }
+  if (!is_scalar_number(num_obj) || num_obj != 2) {
+    stop('"num_obj" must be 2 for either objective formulation.', call. = FALSE)
+  }
+
+  probabilities <- list(p_mutation = p_mutation, p_mut_ind = p_mut_ind,
+                        p_mut_fea = p_mut_fea, p_mut_coord = p_mut_coord)
+  for (parameter in names(probabilities)) {
+    value <- probabilities[[parameter]]
+    if (!is_scalar_number(value) || value < 0 || value > 1) {
+      stop(sprintf('"%s" must be a finite number between 0 and 1.', parameter),
+           call. = FALSE)
+    }
+  }
+  flags <- list(clones = clones, mut_coord = mut_coord)
+  for (parameter in names(flags)) {
+    value <- flags[[parameter]]
+    is_logical_scalar <- is.logical(value) && is.null(dim(value)) &&
+      length(value) == 1L && !is.na(value)
+    if (!(is_scalar_number(value) || is_logical_scalar) || !value %in% c(0, 1)) {
+      stop(sprintf('"%s" must be a single 0/1 or logical flag.', parameter),
+           call. = FALSE)
+    }
+  }
+
+  if (!all(vapply(data[inputs], is_finite_numeric_vector, logical(1)))) {
+    stop('"inputs" must select real numeric columns containing only finite values.',
+         call. = FALSE)
+  }
+  response <- data[[output]]
+  if (!is_finite_numeric_vector(response) || !all(response %in% c(-1, 1)) ||
+      !all(c(-1, 1) %in% response)) {
+    stop('"output" must contain both numeric classes -1 and 1, with no other values.',
+         call. = FALSE)
+  }
+  if (sum(response == -1) < 2L || sum(response == 1) < 2L) {
+    stop('"output" must contain at least two observations in each class.', call. = FALSE)
+  }
 
   # Create the S3 object (a list with attributes)
   object <- list(

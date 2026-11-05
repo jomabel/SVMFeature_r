@@ -24,43 +24,60 @@ svm_fs_meta(
 )
 }
 \arguments{
-\item{data}{DataFrame. The input data.}
+\item{data}{A non-empty data frame with unique, non-empty column names.}
 
-\item{inputs}{Character vector. The names of the input features.}
+\item{inputs}{A non-empty character vector of unique predictor column names.
+Selected predictors must be real numeric vectors with finite values and
+must not include the response column.}
 
-\item{output}{Character. The name of the output variable.}
+\item{output}{A single response column name. The response must be numeric,
+contain only -1 and 1, and have at least two observations of each class.}
 
-\item{pop_size}{Numeric. The population size.}
+\item{pop_size}{A single finite integer of at least 3. The population size.}
 
-\item{num_fea}{Numeric. The number of features.}
+\item{num_fea}{A single positive integer, no larger than the number of inputs.}
 
-\item{n_iter}{Numeric. The number of iterations (default: 10).}
+\item{n_iter}{A single positive finite integer. Number of iterations
+(default: 10).}
 
-\item{max_time}{Numeric. The maximum execution time (default: 300 seconds).}
+\item{max_time}{A single positive finite number. Maximum execution time
+in seconds (default: 300).}
 
 \item{mode}{Character. "iters" for iteration-based execution, "time" for time-based execution.}
 
 \item{objective}{Character. "DIST-EPS" or "MC".}
 
-\item{num_obj}{Numeric. Number of objectives (default: 2).}
+\item{num_obj}{Number of objectives. Must be 2 for either formulation.}
 
-\item{clones}{Numeric. Number of clones (default: 0).}
+\item{clones}{A single 0/1 flag for the clone option (default: 0).
+Logical values are also accepted.}
 
-\item{p_mutation}{Numeric. Mutation probability (default: 0.7).}
+\item{p_mutation}{A single finite mutation probability in \verb{[0, 1]}
+(default: 0.7).}
 
-\item{p_mut_ind}{Numeric. Individual mutation probability (default: 0.4).}
+\item{p_mut_ind}{A single finite individual mutation probability in \verb{[0, 1]}
+(default: 0.4).}
 
-\item{p_mut_fea}{Numeric. Feature mutation probability (default: 0.4).}
+\item{p_mut_fea}{A single finite feature mutation probability in \verb{[0, 1]}
+(default: 0.4).}
 
-\item{p_mut_coord}{Numeric. Mutation coordinates probability (default: 0.2).}
+\item{p_mut_coord}{A single finite coordinate mutation probability in \verb{[0, 1]}
+(default: 0.2).}
 
-\item{mut_coord}{Numeric. Mutation coordinates (default: 0).}
+\item{mut_coord}{A single 0/1 flag for the coordinate mutation strategy
+(default: 0). Logical values are also accepted.}
 }
 \value{
 An S3 object of class "svm_fs_meta".
 }
 \description{
 Implements a feature selection algorithm using Support Vector Machines (SVM).
+}
+\details{
+The current evolutionary operators require at least three individuals and
+two observations in each response class. Data-frame subclasses are converted
+locally to a base data frame. Columns outside the selected inputs and output
+are not used and need not be numeric or complete.
 }
 \examples{
 data <- data.frame(

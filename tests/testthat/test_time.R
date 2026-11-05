@@ -2,7 +2,7 @@ library(testthat)
 library(svmfsmeta)
 
 test_that("svmfsmeta initializes correctly", {
-  data <- data.frame(x1 = 1:4, x2 = 11:14, y = 5:8)
+  data <- data.frame(x1 = 1:4, x2 = 11:14, y = c(-1, -1, 1, 1))
 
   inputs <- c('x1', 'x2')
   output <- 'y'

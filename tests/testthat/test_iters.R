@@ -2,7 +2,7 @@ library(testthat)
 library(svmfsmeta)
 
 test_that("svmfsmeta initializes correctly", {
-  data <- data.frame(x1 = 1:4, x2 = 11:14, y = 5:8)
+  data <- data.frame(x1 = 1:4, x2 = 11:14, y = c(-1, -1, 1, 1))
 
   inputs <- c('x1', 'x2')
   output <- 'y'
@@ -21,13 +21,13 @@ test_that("svmfsmeta initializes correctly", {
 
 test_that("svmfsmeta fails with incorrect inputs", {
 
-  data <- data.frame(x1 = 1:10, x2 = 11:20, y = 21:30)
+  data <- data.frame(x1 = 1:10, x2 = 11:20, y = rep(c(-1, 1), 5))
 
   test_that("mode must be either 'iters' or 'time'", {
     expect_error(
       svmfsmeta::svm_fs_meta(data, inputs = c("x1", "x2"), output = "y",
                  pop_size = 10, num_fea = 2, mode = "wrong_mode"),
-      regexp = 'Error: "mode" must be either "iters" or "time"',
+      regexp = '"mode" must be either "iters" or "time"',
       fixed = TRUE
     )
   })
@@ -36,7 +36,7 @@ test_that("svmfsmeta fails with incorrect inputs", {
     expect_error(
       svmfsmeta::svm_fs_meta(data, inputs = c("x1", "z"), output = "y",
                  pop_size = 10, num_fea = 2),
-      regexp = 'Error: "inputs" must be a character vector of existing column names in "data"',
+      regexp = '"inputs" must be a non-empty character vector of unique existing column names in "data"',
       fixed = TRUE
     )
   })
@@ -45,34 +45,34 @@ test_that("svmfsmeta fails with incorrect inputs", {
     expect_error(
       svmfsmeta::svm_fs_meta(data, inputs = c("x1", "x2"), output = "z",
                  pop_size = 10, num_fea = 2),
-      regexp = 'Error: "output" must be a single column name in "data"',
+      regexp = '"output" must name a single column in "data"',
       fixed = TRUE
     )
   })
 
-  test_that("pop_size must be a positive number", {
+  test_that("pop_size must be an integer of at least three", {
     expect_error(
       svmfsmeta::svm_fs_meta(data, inputs = c("x1", "x2"), output = "y",
                  pop_size = -10, num_fea = 2),
-      regexp = 'Error: "pop_size" must be a positive number',
+      regexp = '"pop_size" must be a finite integer greater than or equal to 3',
       fixed = TRUE
     )
   })
 
-  test_that("n_iter must be a positive number", {
+  test_that("n_iter must be a positive integer", {
     expect_error(
       svmfsmeta::svm_fs_meta(data, inputs = c("x1", "x2"), output = "y",
                  pop_size = 10, num_fea = 2, n_iter = -10),
-      regexp = 'Error: "n_iter" must be a positive number',
+      regexp = '"n_iter" must be a finite integer greater than or equal to 1',
       fixed = TRUE
     )
   })
 
-  test_that("num_fea must be a positive number", {
+  test_that("num_fea must be a positive integer", {
     expect_error(
       svmfsmeta::svm_fs_meta(data, inputs = c("x1", "x2"), output = "y",
                  pop_size = 10, num_fea = -2),
-      regexp = 'Error: "num_fea" must be a positive number',
+      regexp = '"num_fea" must be a finite integer greater than or equal to 1',
       fixed = TRUE
     )
   })
@@ -81,7 +81,7 @@ test_that("svmfsmeta fails with incorrect inputs", {
     expect_error(
       svmfsmeta::svm_fs_meta(data, inputs = c("x1", "x2"), output = "y",
                  pop_size = 10, num_fea = 2, max_time = -300),
-      regexp = 'Error: "max_time" must be a positive number',
+      regexp = '"max_time" must be a positive finite number',
       fixed = TRUE
     )
   })
@@ -93,7 +93,7 @@ test_that("svmfsmeta creates a population in a max number of iterations", {
   set.seed(123)
   data <- data.frame(
     index = 1:100,  # Sequential index from 1 to 100
-    y1 = sample(0:1, 100, replace = TRUE),  # Binary target variable (0 or 1)
+    y1 = sample(c(-1, 1), 100, replace = TRUE),  # Binary target variable (-1 or 1)
     matrix(runif(100 * 278, min = -1, max = 1), nrow = 100, ncol = 278)  # Random values between -1 and 1
   )
   colnames(data) <- c("index", "y1", paste0("x", 0:277))
