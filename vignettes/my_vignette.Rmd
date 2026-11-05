@@ -112,7 +112,6 @@ obj <- svm_fs_meta(
   mode = "iters",
   objective = "DIST-EPS",
   # Advanced parameters (optional, shown here with defaults)
-  num_obj = 2,
   clones = 0,
   p_mutation = 0.7,
   p_mut_ind = 0.4,

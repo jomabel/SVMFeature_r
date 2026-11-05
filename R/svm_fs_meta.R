@@ -24,7 +24,6 @@ library(dplyr)
 #'   in seconds (default: 300).
 #' @param mode Character. "iters" for iteration-based execution, "time" for time-based execution.
 #' @param objective Character. "DIST-EPS" or "MC".
-#' @param num_obj Number of objectives. Must be 2 for either formulation.
 #' @param clones A single 0/1 flag for the clone option (default: 0).
 #'   Logical values are also accepted.
 #' @param p_mutation A single finite mutation probability in `[0, 1]`
@@ -59,7 +58,7 @@ library(dplyr)
 #' @importFrom dplyr group_by summarize n
 svm_fs_meta <- function(data, inputs, output, pop_size, num_fea,
                        n_iter = 10, max_time = 300, mode = "iters", objective="DIST-EPS",
-                       num_obj = 2, clones = 0, p_mutation = 0.7, p_mut_ind = 0.4,
+                       clones = 0, p_mutation = 0.7, p_mut_ind = 0.4,
                        p_mut_fea = 0.4, p_mut_coord = 0.2, mut_coord = 0) {
 
   is_scalar_number <- function(value) {
@@ -119,9 +118,6 @@ svm_fs_meta <- function(data, inputs, output, pop_size, num_fea,
   if (!is_scalar_choice(objective, c("DIST-EPS", "MC"))) {
     stop('"objective" must be either "DIST-EPS" or "MC".', call. = FALSE)
   }
-  if (!is_scalar_number(num_obj) || num_obj != 2) {
-    stop('"num_obj" must be 2 for either objective formulation.', call. = FALSE)
-  }
 
   probabilities <- list(p_mutation = p_mutation, p_mut_ind = p_mut_ind,
                         p_mut_fea = p_mut_fea, p_mut_coord = p_mut_coord)
@@ -169,7 +165,7 @@ svm_fs_meta <- function(data, inputs, output, pop_size, num_fea,
     mode = mode,
     objective = objective,
     population = population(pop_size = pop_size, num_features = num_fea,
-                            num_obj = num_obj, clones = clones, p_mutation = p_mutation,
+                            clones = clones, p_mutation = p_mutation,
                             p_mut_ind = p_mut_ind, p_mut_fea = p_mut_fea,
                             p_mut_coord = p_mut_coord, mut_coord = mut_coord,
                             objective = objective)

@@ -144,13 +144,6 @@ test_that("max_time must be a finite positive numeric scalar", {
   }
 })
 
-test_that("num_obj must be exactly two", {
-  for (value in c(input_validation_bad_scalars, list(-1, 0, 1, 2.5, 3))) {
-    expect_error(input_validation_model(num_obj = value), "num_obj")
-  }
-  expect_equal(input_validation_model(num_obj = 2)$population$num_obj, 2)
-})
-
 for (parameter in c("p_mutation", "p_mut_ind", "p_mut_fea", "p_mut_coord")) {
   test_that(paste(parameter, "must be a numeric probability"), {
     for (value in c(input_validation_bad_scalars, list(-0.01, 1.01))) {

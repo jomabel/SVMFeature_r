@@ -2,7 +2,6 @@ reduction_test_settings <- function(mode, pop_size = 2) {
   list(
     pop_size = pop_size,
     num_features = 1,
-    num_obj = 2,
     clones = 1,
     p_mutation = 0.17,
     p_mut_ind = 0.23,

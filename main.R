@@ -11,7 +11,7 @@ suppressPackageStartupMessages({
 
 # ===== Helper functions =====
 simulate <- function(method, data_scaled, population_size, input_cols, output_col, num_features, iter_type, iter_val,
-                     num_obj, clones, p_mutation, p_mut_ind, p_mut_fea, p_mut_coord, mut_coord) {
+                     clones, p_mutation, p_mut_ind, p_mut_fea, p_mut_coord, mut_coord) {
   message(glue::glue("Running NSGA-II simulation with method: {method}, population size: {population_size}, number of features: {num_features}, iteration type: {iter_type}, and iteration value: {iter_val}"))
 
   obj <- svm_fs_meta(
@@ -24,7 +24,6 @@ simulate <- function(method, data_scaled, population_size, input_cols, output_co
     max_time = iter_val,
     mode = iter_type,
     objective = method,
-    num_obj = num_obj,
     clones = clones,
     p_mutation = p_mutation,
     p_mut_ind = p_mut_ind,
@@ -51,7 +50,6 @@ iter_val        <- 5
 normalize       <- TRUE
 
 # Advanced Population parameters (using library defaults)
-num_obj         <- 2
 clones          <- 0
 p_mutation      <- 0.7
 p_mut_ind       <- 0.4
@@ -117,7 +115,7 @@ library(svmfsmeta)
 # ===== Algorithm execution =====
 # The simulate() helper function wraps the svm_fs_meta object creation and run.svm_fs_meta() call.
 result <- simulate(method, data_scaled, population_size, input_cols, output_col, num_features, iter_type, iter_val,
-                   num_obj, clones, p_mutation, p_mut_ind, p_mut_fea, p_mut_coord, mut_coord)
+                   clones, p_mutation, p_mut_ind, p_mut_fea, p_mut_coord, mut_coord)
 
 # ===== Result Export and Visualization =====
 # save_results() exports the Pareto front to a CSV file in the 'results/' directory.

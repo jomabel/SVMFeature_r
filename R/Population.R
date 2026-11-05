@@ -5,7 +5,6 @@
 #'
 #' @param pop_size Maximum population size
 #' @param num_features Number of features selected
-#' @param num_obj Number of objective (default: 2) //Este parámetro no debería estar es esta versión del algoritmo//
 #' @param clones Number of clones (default: 0)
 #' @param p_mutation Mutation probability (default: 0.7)
 #' @param p_mut_ind Individual mutation probability (default: 0.4)
@@ -20,7 +19,7 @@
 #'
 #' @examples
 #' pop <- population(pop_size = 10, num_features = 3, objective = "DIST-EPS")
-population <- function(pop_size, num_features, num_obj = 2, clones = 0, p_mutation = 0.7,
+population <- function(pop_size, num_features, clones = 0, p_mutation = 0.7,
                        p_mut_ind = 0.4, p_mut_fea = 0.4, p_mut_coord = 0.2, mut_coord = 0,
                        objective = "DIST-EPS")
 {
@@ -38,7 +37,6 @@ population <- function(pop_size, num_features, num_obj = 2, clones = 0, p_mutati
     p_mut_fea = p_mut_fea,
     p_mut_coord = p_mut_coord,
     mut_coord = mut_coord,
-    num_obj = num_obj,
     objective = objective
   )
 
@@ -632,7 +630,6 @@ reduce_population <- function(population) {
   new_population <- population(
     pop_size = population$pop_size,
     num_features = population$num_features,
-    num_obj = population$num_obj,
     clones = population$clones,
     p_mutation = population$p_mutation,
     p_mut_ind = population$p_mut_ind,

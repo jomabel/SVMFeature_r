@@ -14,7 +14,6 @@ svm_fs_meta(
   max_time = 300,
   mode = "iters",
   objective = "DIST-EPS",
-  num_obj = 2,
   clones = 0,
   p_mutation = 0.7,
   p_mut_ind = 0.4,
@@ -46,8 +45,6 @@ in seconds (default: 300).}
 \item{mode}{Character. "iters" for iteration-based execution, "time" for time-based execution.}
 
 \item{objective}{Character. "DIST-EPS" or "MC".}
-
-\item{num_obj}{Number of objectives. Must be 2 for either formulation.}
 
 \item{clones}{A single 0/1 flag for the clone option (default: 0).
 Logical values are also accepted.}
