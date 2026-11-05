@@ -474,6 +474,8 @@ evaluate_solution <- function(solution, data, output) {
 #'
 #' @description
 #'   This function determines if one solution dominates another based on objectives.
+#'   A dominating solution is no worse in any active objective and strictly
+#'   better in at least one.
 #'
 #' @param solution1 First solution object
 #' @param solution2 Second solution object
@@ -498,11 +500,15 @@ dominate <- function(solution1, solution2) {
   # Proceed with comparison if all values are suitable
   if (solution1$obj_fn == 'DIST-EPS') {
     return(solution1$objective[[1]] >= solution2$objective[[1]] &&
-             solution1$objective[[2]] <= solution2$objective[[2]])
+             solution1$objective[[2]] <= solution2$objective[[2]] &&
+             (solution1$objective[[1]] > solution2$objective[[1]] ||
+                solution1$objective[[2]] < solution2$objective[[2]]))
 
   } else if (solution1$obj_fn == 'MC') {
     return(solution1$objective[[3]] <= solution2$objective[[3]] &&
-             solution1$objective[[4]] <= solution2$objective[[4]])
+             solution1$objective[[4]] <= solution2$objective[[4]] &&
+             (solution1$objective[[3]] < solution2$objective[[3]] ||
+                solution1$objective[[4]] < solution2$objective[[4]]))
   }else{
     return(FALSE)
   }
@@ -552,7 +558,9 @@ is_valid_solution <- function(solution) {
 #' @param solution1 First solution object
 #' @param solution2 Second solution object
 #'
-#' @return 0 if the solutions are equal, 1 if solution1 dominates solution2, 2 if solution2 dominates solution1
+#' @return 0 if neither solution dominates the other (equal or incomparable
+#'   objectives), 1 if solution1 dominates solution2, or 2 if solution2
+#'   dominates solution1.
 #'
 #' @export
 #'
@@ -563,30 +571,13 @@ is_valid_solution <- function(solution) {
 #' sol2$objective <- c(0, 1, 1, 1)
 #' dominate2(sol1, sol2)
 dominate2 <- function(solution1, solution2) {
-  if (solution1$obj_fn == 'DIST-EPS') {
-
-    # Check if objectives are equal
-    if (solution1$objective[[1]] == solution2$objective[[1]] &&
-        solution1$objective[[2]] == solution2$objective[[2]]) {
-      return(0)  # No dominance, they are equal
-    } else if (solution1$objective[[1]] >= solution2$objective[[1]] &&
-               solution1$objective[[2]] <= solution2$objective[[2]]) {
-      return(1)  # solution1 dominates solution2
-    } else {
-      return(2)  # solution2 dominates solution1
-    }
-  } else if (solution1$obj_fn == 'MC') {
-    # Check if objectives are equal
-    if (solution1$objective[[3]] == solution2$objective[[3]] &&
-        solution1$objective[[4]] == solution2$objective[[4]]) {
-      return(0)  # No dominance, they are equal
-    } else if (solution1$objective[[3]] <= solution2$objective[[3]] &&
-               solution1$objective[[4]] <= solution2$objective[[4]]) {
-      return(1)  # solution1 dominates solution2
-    } else {
-      return(2)  # solution2 dominates solution1
-    }
+  if (dominate(solution1, solution2)) {
+    return(1)
   }
+  if (dominate(solution2, solution1)) {
+    return(2)
+  }
+  return(0)
 }
 
 
