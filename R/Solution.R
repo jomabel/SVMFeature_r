@@ -290,6 +290,13 @@ calculate_epsilon_objective <- function(solution, data, output) {
   y_pred <- c()
   decision_scores <- c()
 
+  # Support vectors are ordered by class: -1, then 1. Orient scores so
+  # positive values point toward class 1 for either normal direction.
+  orientation <- if (solution$plane_term_b[[1]] > solution$plane_term_b[[2]]) {
+    1
+  } else {
+    -1
+  }
 
   # Iterar sobre todos los datos para calcular la suma de errores
   for (i in 1:nrow(data)) {
@@ -305,8 +312,8 @@ calculate_epsilon_objective <- function(solution, data, output) {
       denominator <- denominator + (solution$plane_coord[index] ** 2)
     }
 
-    # Decision function: f(x) = w·x + b
-    f_x <- distance + solution$plane_term_b[3]
+    # Use the same class-oriented score for predictions and AUC.
+    f_x <- orientation * (distance + solution$plane_term_b[[3]])
     if (f_x >= 0) {
       pred <- 1
     } else {
