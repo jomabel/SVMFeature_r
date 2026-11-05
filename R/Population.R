@@ -666,6 +666,13 @@ reduce_population <- function(population) {
 #' @description
 #'   This function calculates the crowding distance for solutions in a specified front.
 #'
+#' @details
+#'   The calculation uses distance and epsilon for "DIST-EPS", or the two
+#'   class-specific error counts for "MC". Each formulation has two active objectives.
+#'   Extreme solutions receive infinite distance, including all solutions in
+#'   fronts of size one or two. An empty front returns an empty list.
+#'   Objectives with zero range do not contribute a normalized increment.
+#'
 #' @param population population class object
 #' @param num_front The front number to calculate the crowding distance for
 #'
@@ -692,14 +699,15 @@ crowding_distance <- function(population, num_front) {
 
   num_sol_front <- length(front_solutions)
 
-  # Initialize crowding distance to zero for all solutions
+  # Fronts with one or two solutions consist entirely of extreme solutions.
   for (k in seq_along(front_solutions)) {
-    front_solutions[[k]]$crowding_distance <- 0
+    front_solutions[[k]]$crowding_distance <- if (num_sol_front <= 2) Inf else 0
   }
 
   # Process each objective if there are enough solutions to compare
   if (num_sol_front > 2) {
-    for (obj in 1:population$num_obj) {
+    active_objectives <- if (population$objective == "MC") c(3L, 4L) else c(1L, 2L)
+    for (obj in active_objectives) {
       # Sort solutions based on the current objective
       front_solutions <- front_solutions[order(sapply(front_solutions, function(x) x$objective[[obj]]))]
 
