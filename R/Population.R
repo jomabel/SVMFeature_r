@@ -5,7 +5,8 @@
 #'
 #' @param pop_size Maximum population size
 #' @param num_features Number of features selected
-#' @param clones Number of clones (default: 0)
+#' @param clones Whether to allow clone solutions: 0 forbids duplicates and
+#'   1 allows them (default: 0).
 #' @param p_mutation Mutation probability (default: 0.7)
 #' @param p_mut_ind Individual mutation probability (default: 0.4)
 #' @param p_mut_fea Feature mutation probability (default: 0.4)
@@ -457,6 +458,14 @@ select_best_offspring <- function(child1, child2) {
 #' @description
 #'   This function creates a new population through crossover.
 #'
+#' @details
+#'   With \code{clones = 1}, duplicate offspring are permitted; with
+#'   \code{clones = 0}, they are rejected. Mutation is applied according to
+#'   \code{p_mutation}. Rejected offspring are discarded, and further selection
+#'   and crossover propose new candidates. Generation stops with an error after
+#'   100 consecutive invalid or forbidden duplicate candidates. Accepting a
+#'   candidate resets this counter.
+#'
 #' @param population population class object
 #' @param data A data.frame with the input features
 #' @param inputs A vector of input features
@@ -474,12 +483,14 @@ select_best_offspring <- function(child1, child2) {
 #'   x1 = rnorm(20), x2 = rnorm(20),
 #'   y = sample(c(-1, 1), 20, replace = TRUE)
 #' )
-#' pop <- population(pop_size = 2, num_features = 2, objective = "DIST-EPS")
+#' pop <- population(pop_size = 4, num_features = 2, objective = "DIST-EPS")
 #' pop <- generate_initial_population(pop, data, c("x1", "x2"), "y")
 #' pop <- fnds(pop)
 #' pop_new <- new_population(pop, data, c("x1", "x2"), "y")
 new_population <- function(population, data, inputs, output) {
   i <- population$pop_size
+  consecutive_rejections <- 0L
+  max_rejections <- 100L
 
   while (length(population$solution_list) < 2 * population$pop_size) {
     parent <- tournament_select_parent(population)
@@ -499,16 +510,21 @@ new_population <- function(population, data, inputs, output) {
       }
 
       child <- evaluate_solution(child, data, output)
-      while (!child$successful_evaluation) {
-        child <- generate_random_solution(child, data, inputs, output)
-        child <- evaluate_solution(child, data, output)
+      if (!isTRUE(child$successful_evaluation) ||
+          (population$clones == 0 && check_clones(population, child) == 1)) {
+        consecutive_rejections <- consecutive_rejections + 1L
+        if (consecutive_rejections >= max_rejections) {
+          stop(sprintf(
+            paste0("Unable to generate acceptable offspring after %d consecutive rejections. ",
+                   "Check the data and the clone and mutation settings."),
+            max_rejections
+          ), call. = FALSE)
+        }
+        next
       }
 
-      while (check_clones(population, child) == 1 || !child$successful_evaluation) {
-        child <- mutate_solution(child, population, data,inputs, output)
-        child <- evaluate_solution(child, data, output)
-      }
-
+      consecutive_rejections <- 0L
+      child$num <- i
       population$solution_list[[length(population$solution_list) + 1]] <- child
       i <- i + 1
     }

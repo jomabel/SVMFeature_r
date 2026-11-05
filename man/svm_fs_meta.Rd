@@ -46,7 +46,8 @@ in seconds (default: 300).}
 
 \item{objective}{Character. "DIST-EPS" or "MC".}
 
-\item{clones}{A single 0/1 flag for the clone option (default: 0).
+\item{clones}{A single 0/1 flag: 0 forbids clone solutions and 1 allows them
+(default: 0).
 Logical values are also accepted.}
 
 \item{p_mutation}{A single finite mutation probability in \verb{[0, 1]}

@@ -21,7 +21,8 @@ population(
 
 \item{num_features}{Number of features selected}
 
-\item{clones}{Number of clones (default: 0)}
+\item{clones}{Whether to allow clone solutions: 0 forbids duplicates and
+1 allows them (default: 0).}
 
 \item{p_mutation}{Mutation probability (default: 0.7)}
 

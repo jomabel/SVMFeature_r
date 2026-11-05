@@ -89,7 +89,7 @@ Initializes the optimization object.
 | `n_iter` | `numeric` | `10` | Number of iterations (used if `mode="iters"`). |
 | `max_time` | `numeric` | `300` | Maximum seconds (used if `mode="time"`). |
 | `mode` | `character` | `"iters"` | Execution mode: `"iters"` or `"time"`. |
-| `clones` | `numeric` | `0` | `0` or `1`. If `1`, checks for duplicates in population. |
+| `clones` | `numeric` | `0` | `0` forbids duplicate solutions; `1` allows them. |
 | `p_mutation` | `numeric` | `0.7` | Global mutation probability. |
 | `p_mut_ind` | `numeric` | `0.4` | Probability of mutating an individual. |
 | `p_mut_fea` | `numeric` | `0.4` | Probability of mutating a feature selection. |

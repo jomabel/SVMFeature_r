@@ -24,7 +24,8 @@ library(dplyr)
 #'   in seconds (default: 300).
 #' @param mode Character. "iters" for iteration-based execution, "time" for time-based execution.
 #' @param objective Character. "DIST-EPS" or "MC".
-#' @param clones A single 0/1 flag for the clone option (default: 0).
+#' @param clones A single 0/1 flag: 0 forbids clone solutions and 1 allows them
+#'   (default: 0).
 #'   Logical values are also accepted.
 #' @param p_mutation A single finite mutation probability in `[0, 1]`
 #'   (default: 0.7).
