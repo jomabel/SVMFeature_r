@@ -1,18 +1,17 @@
 Package: svmfsmeta
 Type: Package
 Language: en-US
-Title: Multiobjective SVM feature selection via metaheuristics
+Title: Multiobjective SVM Feature Selection via Metaheuristics
 Version: 0.1.0
 Description: Solves the bi-objective soft-margin support vector machine (SVM) with feature selection (FS) problem. Implements a metaheuristic based on the Non-dominated Sorting Genetic Algorithm II (NSGA-II) for Pareto frontier approximation, together with tools for model assessment and visualization. Methods implemented in the package are described in Alcaraz (2024) <doi:10.1016/j.cor.2024.106821> and Valero-Carreras et al. (2023) <doi:10.1016/j.cor.2022.106131>.
 License: AGPL (>= 3)
 Encoding: UTF-8
 RoxygenNote: 7.3.2
 Imports:
-    dplyr,
-    ggplot2,
+    dplyr (>= 1.1.0),
+    ggplot2 (>= 3.4.0),
     magrittr,
     Metrics,
-    pROC,
     stats
 Authors@R: c(
     person(given = "José Manuel",
@@ -42,9 +41,9 @@ Suggests:
     knitr,
     plsgenomics,
     rmarkdown,
-    testthat (>= 3.0.0)
+    testthat (>= 3.1.7)
 VignetteBuilder: knitr
 Config/testthat/edition: 3
 Depends: 
-    R (>= 2.10)
+    R (>= 4.1.0)
 Roxygen: list(markdown = TRUE)

@@ -4,8 +4,6 @@ utils::globalVariables(c("EPS"))
 utils::globalVariables(c("MCPOS"))
 utils::globalVariables(c("MCNEG"))
 
-library(dplyr)
-
 #' svm_fs_meta Class (S3 Implementation)
 #'
 #' Implements a feature selection algorithm using Support Vector Machines (SVM).
