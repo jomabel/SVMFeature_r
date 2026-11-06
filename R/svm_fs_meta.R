@@ -27,7 +27,7 @@ utils::globalVariables(c("MCNEG"))
 #' @param mode Character. "iters" for iteration-based execution, "time" for time-based execution.
 #' @param objective Character. "DIST-EPS" maximizes the distance between margin
 #'   planes and minimizes the sum of margin-violation distances. "MC" minimizes
-#'   the margin-violation counts for the positive and negative classes separately.
+#'   false-negative and false-positive counts from the intermediate classifier.
 #' @param clones A single 0/1 flag: 0 forbids clone solutions and 1 allows them
 #'   (default: 0).
 #'   Logical values are also accepted.
@@ -50,9 +50,10 @@ utils::globalVariables(c("MCNEG"))
 #'   The feature count is fixed by \code{num_fea}; candidate solutions differ in
 #'   which features they select, rather than in how many they select.
 #'
-#'   In the current implementation, "MC" counts violations of each class's
-#'   margin plane. These counts differ from the false negatives and false
-#'   positives obtained from predictions at the intermediate classifier plane.
+#'   In "MC" mode, class 1 is positive. The third objective is the false-negative
+#'   count and the fourth is the false-positive count. These use the same
+#'   intermediate-plane predictions as the reported confusion matrix; scores
+#'   of zero are assigned to class 1.
 #' @return An S3 object of class "svm_fs_meta" containing the input data,
 #'   predictor and response names, optimization settings, and a configured
 #'   \code{population} element. Call \code{run.svm_fs_meta()} to generate and
@@ -201,7 +202,9 @@ svm_fs_meta <- function(data, inputs, output, pop_size, num_fea,
 #'       \code{features}, normal coefficients in \code{plane_coord}, and three
 #'       intercepts in \code{plane_term_b}. The coefficients follow the order of
 #'       \code{features}; the intercepts correspond to the negative-class margin
-#'       plane, positive-class margin plane, and intermediate classifier plane.}
+#'       plane, positive-class margin plane, and intermediate classifier plane.
+#'       Its \code{objective} vector contains distance, epsilon, false negatives,
+#'       and false positives, in that order.}
 #'     \item{df_solutions}{A data frame with one row per retained solution,
 #'       ordered by front. The numeric \code{FRONT} column gives the front number;
 #'       the other columns currently contain lists of solution values.}
@@ -225,6 +228,8 @@ svm_fs_meta <- function(data, inputs, output, pop_size, num_fea,
 #'   are calculated on the data used for optimization, with class 1 treated as
 #'   positive. The confusion matrix has true classes in rows and predicted
 #'   classes in columns, ordered as -1, 1.
+#'   The historical summary-table and CSV columns \code{MCPOS} and \code{MCNEG}
+#'   contain false-negative and false-positive counts, respectively.
 #' @export
 #'
 #' @examples
@@ -297,6 +302,9 @@ run.svm_fs_meta <- function(object) {
 #' @returns A \code{ggplot} object displaying front 1, returned invisibly after
 #'   printing the plot. Returns \code{NULL} if there are no solutions to plot
 #'   or the objective is unsupported.
+#' @details
+#'   For "MC", the horizontal axis shows false negatives (\code{MCPOS}) and
+#'   the vertical axis shows false positives (\code{MCNEG}).
 #' @importFrom ggplot2 ggplot aes geom_point labs theme_minimal element_line
 #' @export
 #'
@@ -336,8 +344,8 @@ draw_solution <- function(x, ...) {
     front_population1$MCPOS <- as.numeric(front_population1$MCPOS)
     front_population1$MCNEG <- as.numeric(front_population1$MCNEG)
 
-    xaxis_label <- 'False Positives'
-    yaxis_label <- 'False Negatives'
+    xaxis_label <- 'False Negatives'
+    yaxis_label <- 'False Positives'
     xvalues <- front_population1$MCPOS
     yvalues <- front_population1$MCNEG
   } else {

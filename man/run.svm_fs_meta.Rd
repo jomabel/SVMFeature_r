@@ -19,7 +19,9 @@ An updated S3 object of class "svm_fs_meta", retaining the input data
       \code{features}, normal coefficients in \code{plane_coord}, and three
       intercepts in \code{plane_term_b}. The coefficients follow the order of
       \code{features}; the intercepts correspond to the negative-class margin
-      plane, positive-class margin plane, and intermediate classifier plane.}
+      plane, positive-class margin plane, and intermediate classifier plane.
+      Its \code{objective} vector contains distance, epsilon, false negatives,
+      and false positives, in that order.}
     \item{df_solutions}{A data frame with one row per retained solution,
       ordered by front. The numeric \code{FRONT} column gives the front number;
       the other columns currently contain lists of solution values.}
@@ -47,6 +49,8 @@ In time mode, \code{object$max_time} is an approximate budget for the
   are calculated on the data used for optimization, with class 1 treated as
   positive. The confusion matrix has true classes in rows and predicted
   classes in columns, ordered as -1, 1.
+  The historical summary-table and CSV columns \code{MCPOS} and \code{MCNEG}
+  contain false-negative and false-positive counts, respectively.
 }
 \examples{
 data <- data.frame(

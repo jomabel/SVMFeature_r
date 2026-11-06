@@ -11,11 +11,11 @@ The optimizer returns an object containing the final population of candidate cla
 - ⚙️ **NSGA-II Metaheuristic**: Robust multi-objective genetic algorithm.
 - 📈 **Optimization Objectives**:
   - `DIST-EPS`: maximize the distance between margin planes and minimize the sum of margin-violation distances (epsilon).
-  - `MC`: minimize the margin-violation counts for the positive and negative classes separately.
+  - `MC`: minimize false negatives (FN) and false positives (FP) separately.
 - 🔍 **Visualization**: Built-in `draw_solution()` to inspect the Pareto front.
 - 📤 **Data Export**: Save optimal solutions directly to CSV.
 
-The current `MC` implementation counts violations against the class-specific margin planes. These counts differ from false positives and false negatives computed using the central classifier. Classification metrics are calculated from that central classifier.
+Both `MC` objectives use the central classifier and the same predictions as the reported classification metrics. Class `1` is positive, and a zero decision score predicts `1`. In solution summaries and CSV exports, the historical column names `MCPOS` and `MCNEG` contain FN and FP, respectively. The confusion matrix has true classes in rows and predicted classes in columns: FN is `conf_matrix["1", "-1"]`, and FP is `conf_matrix["-1", "1"]`.
 
 # 📦 Installation
 

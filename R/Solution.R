@@ -24,7 +24,7 @@ solution <- function(num, num_features, obj) {
     plane_coord = list(),
     plane_term_b = list(),
     obj_fn = obj,
-    objective = numeric(4),  # (1)distance, (2)epsilon, (3)FP, (4)FN
+    objective = numeric(4),  # (1)distance, (2)epsilon, (3)FN, (4)FP
     sol_dom_by = 0,  # Initialize domination counter
     dominates_list = list(),  # List of solutions that this solution dominates
     list_dominated_by = list(),  # List of solutions that dominate this solution
@@ -42,6 +42,12 @@ solution <- function(num, num_features, obj) {
 #'
 #' @description
 #'   Method to convert the solution to a dictionary
+#'
+#' @details
+#'   For an evaluated solution, the historical fields \code{MCPOS} and
+#'   \code{MCNEG} contain false-negative and false-positive counts,
+#'   respectively. Class 1 is positive, and both counts use predictions from
+#'   the intermediate classifier plane.
 #'
 #' @param solution solution class object
 #'
@@ -263,13 +269,23 @@ calculate_distance_objective <- function(solution) {
 #' @title Method to Calculate the Epsilon Objective
 #'
 #' @description
-#'   This method calculates the epsilon objective by evaluating misclassified points.
+#'   Calculates the sum of margin-violation distances for epsilon and the
+#'   classification-error counts used by the MC objective pair.
+#'
+#' @details
+#'   Epsilon is calculated against each observation's class-specific margin
+#'   plane. False negatives and false positives are taken from the confusion
+#'   matrix of the intermediate classifier, with class 1 positive. A score of
+#'   zero is assigned to class 1. The two types of objective are calculated for
+#'   both optimization modes.
 #'
 #' @param solution solution class object containing data and features for classification
 #' @param data A data.frame with the input features.
-#' @param output A vector with class labels.
+#' @param output The name of the response column containing labels -1 and 1.
 #'
-#' @return solution class object with the epsilon objective calculated
+#' @return The solution list with epsilon in \code{objective[2]}, false
+#'   negatives in \code{objective[3]}, false positives in \code{objective[4]},
+#'   and classification metrics calculated from the intermediate classifier.
 #'
 #' @export
 #'
@@ -280,7 +296,7 @@ calculate_distance_objective <- function(solution) {
 #' sol <- construct_planes(sol, data)
 #' sol <- calculate_epsilon_objective(sol, data, "y")
 calculate_epsilon_objective <- function(solution, data, output) {
-  # Initialize misclassification counters
+  # Initialize epsilon and classification-error counts.
   solution$objective[[2]] <- 0
   solution$objective[[3]] <- 0
   solution$objective[[4]] <- 0
@@ -322,7 +338,7 @@ calculate_epsilon_objective <- function(solution, data, output) {
     y_pred <- c(y_pred, pred)
     decision_scores <- c(decision_scores, f_x)
 
-    # Adjust for the independent term and count errors
+    # Measure the signed distance to the observation's class-specific margin.
     # If the class is 1, distance is calculated with plane b[2]
     if (clazz == 1) {
       distance <- distance + solution$plane_term_b[[2]]
@@ -332,42 +348,41 @@ calculate_epsilon_objective <- function(solution, data, output) {
 
     distance <- distance / denominator ** (1/2)
 
-    # If b[0] > b[1], class -1 is above the plane and class 1 below
+    # In this orientation, negative-class violations have positive distance.
     if (solution$plane_term_b[[1]] > solution$plane_term_b[[2]]) {
-      # If class is -1 and distance is positive, it is misclassified
+      # Negative-class margin violations.
       if (clazz == -1) {
         if (distance > 0) {
-          solution$objective[[4]] <- solution$objective[[4]] + 1
           solution$objective[[2]] <- solution$objective[[2]] + distance
         }
       }
-      # If class is 1 and distance is negative, it is misclassified
+      # Positive-class margin violations.
       else {
         if (distance < 0) {
-          solution$objective[[3]] <- solution$objective[[3]] + 1
           solution$objective[[2]] <- solution$objective[[2]] + abs(distance)
         }
       }
     }
-    # If b[0] < b[1], class -1 is below the plane and class 1 above
+    # The signs of margin violations reverse for the other orientation.
     else {
-      # If class is -1 and distance is negative, it is misclassified
+      # Negative-class margin violations.
       if (clazz == -1) {
         if (distance < 0) {
-          solution$objective[[4]] <- solution$objective[[4]] + 1
           solution$objective[[2]] <- solution$objective[[2]] + abs(distance)
         }
       }
-      # If class is 1 and distance is positive, it is misclassified
+      # Positive-class margin violations.
       else {
         if (distance > 0) {
-          solution$objective[[3]] <- solution$objective[[3]] + 1
           solution$objective[[2]] <- solution$objective[[2]] + distance
         }
       }
     }
   }
   solution <- svmfsmeta::calculate_metrics(solution, y_true, y_pred, decision_scores)
+  # Rows are true classes; columns are predictions. Preserve the objective order.
+  solution$objective[[3]] <- unname(solution$conf_matrix["1", "-1"])  # FN
+  solution$objective[[4]] <- unname(solution$conf_matrix["-1", "1"])  # FP
   return(solution)
 }
 

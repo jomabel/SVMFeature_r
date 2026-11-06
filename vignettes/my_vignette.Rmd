@@ -39,9 +39,9 @@ studied by Valero-Carreras et al. (2023) and Alcaraz,J. (2024). The package empl
 
 - **`DIST-EPS`**: Maximizes the distance between the two margin planes and minimizes the sum of margin-violation distances (epsilon).
 
-- **`MC`**: Minimizes the margin-violation counts for the positive and negative classes separately.
+- **`MC`**: Minimizes false negatives (FN) and false positives (FP) separately.
 
-The current `MC` implementation counts violations against the class-specific margin planes. These counts differ from false positives and false negatives computed using the central classifier. The classification metrics are calculated from that central classifier.
+Both `MC` objectives use the central classifier and the same predictions as the reported classification metrics. Class `1` is positive, and a zero decision score predicts `1`. In solution summaries and CSV exports, the historical column names `MCPOS` and `MCNEG` contain FN and FP, respectively. The confusion matrix has true classes in rows and predicted classes in columns: FN is `conf_matrix["1", "-1"]`, and FP is `conf_matrix["-1", "1"]`.
 
 The optimizer selects exactly `num_fea` predictors in every candidate; this number stays fixed during optimization. By treating the selected pair of objectives separately, the package generates multiple candidate classifiers, enabling users to explore different trade-offs. These solutions can subsequently be compared using performance
 metrics derived from the confusion matrix, such as the Area Under the ROC Curve (AUC), the F-score, and Cohen's Kappa coefficient.
@@ -113,7 +113,7 @@ output_col <- names(data)[1]
 # Initialize svm_fs_meta object
 # You can choose between different optimization objectives:
 # - "DIST-EPS": Maximizes margin and minimizes error (default).
-# - "MC": Minimizes class-specific margin-violation counts.
+# - "MC": Minimizes false negatives and false positives separately.
 
 set.seed(42)
 obj <- svm_fs_meta(

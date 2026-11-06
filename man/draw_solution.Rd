@@ -19,6 +19,10 @@ A \code{ggplot} object displaying front 1, returned invisibly after
 \description{
 Draw the Pareto Front of an svm_fs_meta object
 }
+\details{
+For "MC", the horizontal axis shows false negatives (\code{MCPOS}) and
+  the vertical axis shows false positives (\code{MCNEG}).
+}
 \examples{
 data <- data.frame(
   x1 = c(1, 2, 1, 5, 6, 7),

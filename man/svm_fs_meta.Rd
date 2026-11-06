@@ -49,7 +49,7 @@ an iteration already started finishes, so total runtime may exceed it.}
 
 \item{objective}{Character. "DIST-EPS" maximizes the distance between margin
 planes and minimizes the sum of margin-violation distances. "MC" minimizes
-the margin-violation counts for the positive and negative classes separately.}
+false-negative and false-positive counts from the intermediate classifier.}
 
 \item{clones}{A single 0/1 flag: 0 forbids clone solutions and 1 allows them
 (default: 0).
@@ -89,9 +89,10 @@ The current evolutionary operators require at least three individuals and
   The feature count is fixed by \code{num_fea}; candidate solutions differ in
   which features they select, rather than in how many they select.
 
-  In the current implementation, "MC" counts violations of each class's
-  margin plane. These counts differ from the false negatives and false
-  positives obtained from predictions at the intermediate classifier plane.
+  In "MC" mode, class 1 is positive. The third objective is the false-negative
+  count and the fourth is the false-positive count. These use the same
+  intermediate-plane predictions as the reported confusion matrix; scores
+  of zero are assigned to class 1.
 }
 \examples{
 data <- data.frame(
