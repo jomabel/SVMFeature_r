@@ -90,7 +90,7 @@ Initializes the optimization object.
 | `num_fea` | `numeric` | - | Exact number of predictors selected in every candidate; a positive integer no larger than `length(inputs)`. |
 | `objective` | `character` | `"DIST-EPS"` | Objectives: `"DIST-EPS"` or `"MC"`. |
 | `n_iter` | `numeric` | `10` | Number of iterations (used if `mode="iters"`). |
-| `max_time` | `numeric` | `300` | Maximum seconds (used if `mode="time"`). |
+| `max_time` | `numeric` | `300` | Approximate optimization time budget in seconds (used if `mode="time"`); initialization is excluded. |
 | `mode` | `character` | `"iters"` | Execution mode: `"iters"` or `"time"`. |
 | `clones` | `numeric` | `0` | `0` forbids duplicate solutions; `1` allows them. |
 | `p_mutation` | `numeric` | `0.7` | Global mutation probability. |
@@ -99,6 +99,8 @@ Initializes the optimization object.
 | `p_mut_coord` | `numeric` | `0.2` | Probability of mutating hyperplane coordinates. |
 
 | `mut_coord` | `numeric` | `0` | Mutation strategy on coordinates (0: Scaling, 1: Full replacement). |
+
+In time mode, the timer starts after the initial population has been generated, sorted into fronts, and summarized. The budget is checked before each iteration, and an iteration already started runs to completion. Total runtime therefore includes initialization and may exceed `max_time`; this is not a strict timeout.
 
 ### `run.svm_fs_meta(object)`
 Runs the optimization and returns an updated S3 object of class `svm_fs_meta`. It contains the original data and configuration, plus the final population in `result$population`.

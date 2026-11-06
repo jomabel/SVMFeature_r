@@ -102,6 +102,9 @@ data[, input_cols] <- as.data.frame(lapply(data[, input_cols], scaler))
 ### 2. Running the NSGA-II Simulation
 
 Once the data is prepared, we define the inputs and target, and run the optimization.
+
+The example uses `mode = "iters"`, which runs the number of iterations set by `n_iter`. With `mode = "time"`, `max_time` is an approximate time budget in seconds for the optimization loop. The timer starts after the initial population has been generated, sorted into fronts, and summarized, and is checked before each iteration. An iteration already started runs to completion, so total runtime includes initialization and may exceed `max_time`; this is not a strict timeout.
+
 ```{r colon-optimize, results='hide'}
 # Define input and output column names
 input_cols <- names(data)[-1]

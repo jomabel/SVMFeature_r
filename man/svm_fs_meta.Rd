@@ -40,8 +40,10 @@ Each candidate selects exactly this many features throughout optimization.}
 \item{n_iter}{A single positive finite integer. Number of iterations
 (default: 10).}
 
-\item{max_time}{A single positive finite number. Maximum execution time
-in seconds (default: 300).}
+\item{max_time}{A single positive finite number. Approximate optimization
+time budget in seconds when \code{mode = "time"} (default: 300).
+Initialization is excluded. The budget is checked before each iteration;
+an iteration already started finishes, so total runtime may exceed it.}
 
 \item{mode}{Character. "iters" for iteration-based execution, "time" for time-based execution.}
 

@@ -31,7 +31,14 @@ An updated S3 object of class "svm_fs_meta", retaining the input data
 Run the svm_fs_meta optimization process
 }
 \details{
-Front 1 contains the non-dominated solutions in the final population and
+In time mode, \code{object$max_time} is an approximate budget for the
+  optimization loop. Timing starts after the initial population has been
+  generated, sorted into fronts, and summarized. The budget is checked before
+  each iteration, and an iteration already started runs to completion. Total
+  runtime therefore includes initialization and may exceed the requested
+  budget; this is not a strict timeout.
+
+  Front 1 contains the non-dominated solutions in the final population and
   provides an approximation to the problem's Pareto front. Both
   \code{solution_list} and \code{df_solutions} include all retained fronts.
 

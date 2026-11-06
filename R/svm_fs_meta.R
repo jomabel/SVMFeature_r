@@ -20,8 +20,10 @@ utils::globalVariables(c("MCNEG"))
 #'   Each candidate selects exactly this many features throughout optimization.
 #' @param n_iter A single positive finite integer. Number of iterations
 #'   (default: 10).
-#' @param max_time A single positive finite number. Maximum execution time
-#'   in seconds (default: 300).
+#' @param max_time A single positive finite number. Approximate optimization
+#'   time budget in seconds when \code{mode = "time"} (default: 300).
+#'   Initialization is excluded. The budget is checked before each iteration;
+#'   an iteration already started finishes, so total runtime may exceed it.
 #' @param mode Character. "iters" for iteration-based execution, "time" for time-based execution.
 #' @param objective Character. "DIST-EPS" maximizes the distance between margin
 #'   planes and minimizes the sum of margin-violation distances. "MC" minimizes
@@ -207,6 +209,13 @@ svm_fs_meta <- function(data, inputs, output, pop_size, num_fea,
 #'       sorting.}
 #'   }
 #' @details
+#'   In time mode, \code{object$max_time} is an approximate budget for the
+#'   optimization loop. Timing starts after the initial population has been
+#'   generated, sorted into fronts, and summarized. The budget is checked before
+#'   each iteration, and an iteration already started runs to completion. Total
+#'   runtime therefore includes initialization and may exceed the requested
+#'   budget; this is not a strict timeout.
+#'
 #'   Front 1 contains the non-dominated solutions in the final population and
 #'   provides an approximation to the problem's Pareto front. Both
 #'   \code{solution_list} and \code{df_solutions} include all retained fronts.
