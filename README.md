@@ -1,8 +1,8 @@
 # 🧠 SVMFsMeta: Multi-objective SVM Classifier with Feature Selection
 
-`SVMFsMeta` is an R package that implements the algorithms proposed by Valero et al. (2023) and Alcaraz, J. (2024). It provides a metaheuristic approach to solve the **soft-margin Support Vector Machine (SVM)** problem combined with **Feature Selection**.
+`svmfsmeta` is an R package for binary **soft-margin Support Vector Machine (SVM)** classification with **Feature Selection**, based on the methodologies studied by Valero-Carreras et al. (2023) and Alcaraz (2024).
 
-The result of the algorithm is a **Pareto front**, where each solution is an SVM-based classifier, allowing decision-makers to select the optimal model based on their specific trade-offs between accuracy and complexity.
+The optimizer returns an object containing the final population of candidate classifiers. Its first non-dominated front approximates the **Pareto front** for the selected pair of objectives. Every candidate uses exactly `num_fea` predictors; this number stays fixed during optimization.
 
 ---
 
@@ -10,10 +10,12 @@ The result of the algorithm is a **Pareto front**, where each solution is an SVM
 
 - ⚙️ **NSGA-II Metaheuristic**: Robust multi-objective genetic algorithm.
 - 📈 **Optimization Objectives**:
-  - Margin distance and Epsilon (error).
-  - False Positives (FP) and False Negatives (FN).
+  - `DIST-EPS`: maximize the distance between margin planes and minimize the sum of margin-violation distances (epsilon).
+  - `MC`: minimize the margin-violation counts for the positive and negative classes separately.
 - 🔍 **Visualization**: Built-in `draw_solution()` to inspect the Pareto front.
 - 📤 **Data Export**: Save optimal solutions directly to CSV.
+
+The current `MC` implementation counts violations against the class-specific margin planes. These counts differ from false positives and false negatives computed using the central classifier. Classification metrics are calculated from that central classifier.
 
 # 📦 Installation
 
@@ -85,7 +87,7 @@ Initializes the optimization object.
 | `inputs` | `vector` | - | Names of the input feature columns. |
 | `output` | `character` | - | Name of the target (class) column. |
 | `pop_size` | `numeric` | - | Size of the population. |
-| `num_fea` | `numeric` | - | Maximum number of features to select. |
+| `num_fea` | `numeric` | - | Exact number of predictors selected in every candidate; a positive integer no larger than `length(inputs)`. |
 | `objective` | `character` | `"DIST-EPS"` | Objectives: `"DIST-EPS"` or `"MC"`. |
 | `n_iter` | `numeric` | `10` | Number of iterations (used if `mode="iters"`). |
 | `max_time` | `numeric` | `300` | Maximum seconds (used if `mode="time"`). |
@@ -98,7 +100,26 @@ Initializes the optimization object.
 | `mut_coord` | `numeric` | `0` | Mutation strategy on coordinates (0: Scaling, 1: Full replacement). |
 
 ### `run.svm_fs_meta(object)`
-Starts the optimization process (NSGA-II).
+Runs the optimization and returns an updated S3 object of class `svm_fs_meta`. It contains the original data and configuration, plus the final population in `result$population`.
+
+The population contains a summary table, `df_solutions`, and the individual candidate lists, `solution_list`. The table includes all retained fronts; use `FRONT == 1` to extract its non-dominated candidates:
+
+```r
+solutions_table <- result$population$df_solutions
+pareto_front <- solutions_table[solutions_table$FRONT == 1, , drop = FALSE]
+
+front_solutions <- Filter(
+  function(s) s$front == 1,
+  result$population$solution_list
+)
+selected <- front_solutions[[1]]
+selected$features      # Selected predictor names
+selected$plane_coord   # Normal coefficients, in the same predictor order
+selected$plane_term_b  # Intercepts: negative-class margin, positive-class margin, central plane
+selected[c("accuracy", "precision", "recall", "f1", "kappa", "auc", "conf_matrix")]
+```
+
+Here the first front candidate is inspected. Candidate selection depends on the desired objective trade-off. The reported metrics describe the data used for optimization.
 
 ### `draw_solution(x)`
 Generates a `ggplot2` scatter plot of the Pareto front (Front 1).

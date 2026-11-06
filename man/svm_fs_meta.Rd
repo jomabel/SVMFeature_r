@@ -34,7 +34,8 @@ contain only -1 and 1, and have at least two observations of each class.}
 
 \item{pop_size}{A single finite integer of at least 3. The population size.}
 
-\item{num_fea}{A single positive integer, no larger than the number of inputs.}
+\item{num_fea}{A single positive integer, no larger than the number of inputs.
+Each candidate selects exactly this many features throughout optimization.}
 
 \item{n_iter}{A single positive finite integer. Number of iterations
 (default: 10).}
@@ -44,38 +45,51 @@ in seconds (default: 300).}
 
 \item{mode}{Character. "iters" for iteration-based execution, "time" for time-based execution.}
 
-\item{objective}{Character. "DIST-EPS" or "MC".}
+\item{objective}{Character. "DIST-EPS" maximizes the distance between margin
+planes and minimizes the sum of margin-violation distances. "MC" minimizes
+the margin-violation counts for the positive and negative classes separately.}
 
 \item{clones}{A single 0/1 flag: 0 forbids clone solutions and 1 allows them
 (default: 0).
 Logical values are also accepted.}
 
-\item{p_mutation}{A single finite mutation probability in \verb{[0, 1]}
+\item{p_mutation}{A single finite mutation probability in \code{[0, 1]}
 (default: 0.7).}
 
-\item{p_mut_ind}{A single finite individual mutation probability in \verb{[0, 1]}
+\item{p_mut_ind}{A single finite individual mutation probability in \code{[0, 1]}
 (default: 0.4).}
 
-\item{p_mut_fea}{A single finite feature mutation probability in \verb{[0, 1]}
+\item{p_mut_fea}{A single finite feature mutation probability in \code{[0, 1]}
 (default: 0.4).}
 
-\item{p_mut_coord}{A single finite coordinate mutation probability in \verb{[0, 1]}
+\item{p_mut_coord}{A single finite coordinate mutation probability in \code{[0, 1]}
 (default: 0.2).}
 
 \item{mut_coord}{A single 0/1 flag for the coordinate mutation strategy
 (default: 0). Logical values are also accepted.}
 }
 \value{
-An S3 object of class "svm_fs_meta".
+An S3 object of class "svm_fs_meta" containing the input data,
+  predictor and response names, optimization settings, and a configured
+  \code{population} element. Call \code{run.svm_fs_meta()} to generate and
+  optimize its candidate solutions.
 }
 \description{
-Implements a feature selection algorithm using Support Vector Machines (SVM).
+Configures multi-objective support vector machine (SVM) optimization for
+binary classification with a fixed number of selected features.
 }
 \details{
 The current evolutionary operators require at least three individuals and
-two observations in each response class. Data-frame subclasses are converted
-locally to a base data frame. Columns outside the selected inputs and output
-are not used and need not be numeric or complete.
+  two observations in each response class. Data-frame subclasses are converted
+  locally to a base data frame. Columns outside the selected inputs and output
+  are not used and need not be numeric or complete.
+
+  The feature count is fixed by \code{num_fea}; candidate solutions differ in
+  which features they select, rather than in how many they select.
+
+  In the current implementation, "MC" counts violations of each class's
+  margin plane. These counts differ from the false negatives and false
+  positives obtained from predictions at the intermediate classifier plane.
 }
 \examples{
 data <- data.frame(

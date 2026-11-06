@@ -6,7 +6,8 @@ utils::globalVariables(c("MCNEG"))
 
 #' svm_fs_meta Class (S3 Implementation)
 #'
-#' Implements a feature selection algorithm using Support Vector Machines (SVM).
+#' Configures multi-objective support vector machine (SVM) optimization for
+#' binary classification with a fixed number of selected features.
 #'
 #' @param data A non-empty data frame with unique, non-empty column names.
 #' @param inputs A non-empty character vector of unique predictor column names.
@@ -16,22 +17,25 @@ utils::globalVariables(c("MCNEG"))
 #'   contain only -1 and 1, and have at least two observations of each class.
 #' @param pop_size A single finite integer of at least 3. The population size.
 #' @param num_fea A single positive integer, no larger than the number of inputs.
+#'   Each candidate selects exactly this many features throughout optimization.
 #' @param n_iter A single positive finite integer. Number of iterations
 #'   (default: 10).
 #' @param max_time A single positive finite number. Maximum execution time
 #'   in seconds (default: 300).
 #' @param mode Character. "iters" for iteration-based execution, "time" for time-based execution.
-#' @param objective Character. "DIST-EPS" or "MC".
+#' @param objective Character. "DIST-EPS" maximizes the distance between margin
+#'   planes and minimizes the sum of margin-violation distances. "MC" minimizes
+#'   the margin-violation counts for the positive and negative classes separately.
 #' @param clones A single 0/1 flag: 0 forbids clone solutions and 1 allows them
 #'   (default: 0).
 #'   Logical values are also accepted.
-#' @param p_mutation A single finite mutation probability in `[0, 1]`
+#' @param p_mutation A single finite mutation probability in \code{[0, 1]}
 #'   (default: 0.7).
-#' @param p_mut_ind A single finite individual mutation probability in `[0, 1]`
+#' @param p_mut_ind A single finite individual mutation probability in \code{[0, 1]}
 #'   (default: 0.4).
-#' @param p_mut_fea A single finite feature mutation probability in `[0, 1]`
+#' @param p_mut_fea A single finite feature mutation probability in \code{[0, 1]}
 #'   (default: 0.4).
-#' @param p_mut_coord A single finite coordinate mutation probability in `[0, 1]`
+#' @param p_mut_coord A single finite coordinate mutation probability in \code{[0, 1]}
 #'   (default: 0.2).
 #' @param mut_coord A single 0/1 flag for the coordinate mutation strategy
 #'   (default: 0). Logical values are also accepted.
@@ -40,7 +44,17 @@ utils::globalVariables(c("MCNEG"))
 #'   two observations in each response class. Data-frame subclasses are converted
 #'   locally to a base data frame. Columns outside the selected inputs and output
 #'   are not used and need not be numeric or complete.
-#' @return An S3 object of class "svm_fs_meta".
+#'
+#'   The feature count is fixed by \code{num_fea}; candidate solutions differ in
+#'   which features they select, rather than in how many they select.
+#'
+#'   In the current implementation, "MC" counts violations of each class's
+#'   margin plane. These counts differ from the false negatives and false
+#'   positives obtained from predictions at the intermediate classifier plane.
+#' @return An S3 object of class "svm_fs_meta" containing the input data,
+#'   predictor and response names, optimization settings, and a configured
+#'   \code{population} element. Call \code{run.svm_fs_meta()} to generate and
+#'   optimize its candidate solutions.
 #' @export
 #'
 #' @examples
@@ -176,7 +190,32 @@ svm_fs_meta <- function(data, inputs, output, pop_size, num_fea,
 
 #' Run the svm_fs_meta optimization process
 #' @param object An object of class "svm_fs_meta".
-#' @return The final population after the optimization process.
+#' @return An updated S3 object of class "svm_fs_meta", retaining the input data
+#'   and optimization settings. Its \code{population} element is an object of
+#'   class "population" containing:
+#'   \describe{
+#'     \item{solution_list}{A list of the retained candidate solutions. Each
+#'       solution is a list containing its selected feature names in
+#'       \code{features}, normal coefficients in \code{plane_coord}, and three
+#'       intercepts in \code{plane_term_b}. The coefficients follow the order of
+#'       \code{features}; the intercepts correspond to the negative-class margin
+#'       plane, positive-class margin plane, and intermediate classifier plane.}
+#'     \item{df_solutions}{A data frame with one row per retained solution,
+#'       ordered by front. The numeric \code{FRONT} column gives the front number;
+#'       the other columns currently contain lists of solution values.}
+#'     \item{fronts}{The front membership information produced by non-dominated
+#'       sorting.}
+#'   }
+#' @details
+#'   Front 1 contains the non-dominated solutions in the final population and
+#'   provides an approximation to the problem's Pareto front. Both
+#'   \code{solution_list} and \code{df_solutions} include all retained fronts.
+#'
+#'   Each solution also stores \code{accuracy}, \code{precision}, \code{recall},
+#'   \code{f1}, \code{kappa}, \code{auc}, and \code{conf_matrix}. These metrics
+#'   are calculated on the data used for optimization, with class 1 treated as
+#'   positive. The confusion matrix has true classes in rows and predicted
+#'   classes in columns, ordered as -1, 1.
 #' @export
 #'
 #' @examples
@@ -188,6 +227,16 @@ svm_fs_meta <- function(data, inputs, output, pop_size, num_fea,
 #' obj <- svm_fs_meta(data, inputs = c("x1", "x2"), output = "y",
 #'                   pop_size = 4, num_fea = 2, n_iter = 1)
 #' res <- run.svm_fs_meta(obj)
+#' front <- res$population$df_solutions
+#' front <- front[front$FRONT == 1, , drop = FALSE]
+#' front_solutions <- Filter(function(s) s$front == 1,
+#'                           res$population$solution_list)
+#' selected <- front_solutions[[1]]
+#' selected$features
+#' selected$plane_coord
+#' selected$plane_term_b
+#' selected[c("accuracy", "precision", "recall", "f1", "kappa", "auc",
+#'            "conf_matrix")]
 run.svm_fs_meta <- function(object) {
 
   object$population <- generate_initial_population(object$population, object$data,
@@ -236,9 +285,9 @@ run.svm_fs_meta <- function(object) {
 #' Draw the Pareto Front of an svm_fs_meta object
 #' @param x An object of class "svm_fs_meta".
 #' @param ... Additional arguments (not used).
-#' @returns An object of class `ggplot` representing the selected solution.
-#'    The plot summarizes the strcture of characteristics of the solution
-#'    generated by the optimization procedure.
+#' @returns A \code{ggplot} object displaying front 1, returned invisibly after
+#'   printing the plot. Returns \code{NULL} if there are no solutions to plot
+#'   or the objective is unsupported.
 #' @importFrom ggplot2 ggplot aes geom_point labs theme_minimal element_line
 #' @export
 #'

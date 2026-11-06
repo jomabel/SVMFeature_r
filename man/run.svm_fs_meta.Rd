@@ -10,10 +10,36 @@ run.svm_fs_meta(object)
 \item{object}{An object of class "svm_fs_meta".}
 }
 \value{
-The final population after the optimization process.
+An updated S3 object of class "svm_fs_meta", retaining the input data
+  and optimization settings. Its \code{population} element is an object of
+  class "population" containing:
+  \describe{
+    \item{solution_list}{A list of the retained candidate solutions. Each
+      solution is a list containing its selected feature names in
+      \code{features}, normal coefficients in \code{plane_coord}, and three
+      intercepts in \code{plane_term_b}. The coefficients follow the order of
+      \code{features}; the intercepts correspond to the negative-class margin
+      plane, positive-class margin plane, and intermediate classifier plane.}
+    \item{df_solutions}{A data frame with one row per retained solution,
+      ordered by front. The numeric \code{FRONT} column gives the front number;
+      the other columns currently contain lists of solution values.}
+    \item{fronts}{The front membership information produced by non-dominated
+      sorting.}
+  }
 }
 \description{
 Run the svm_fs_meta optimization process
+}
+\details{
+Front 1 contains the non-dominated solutions in the final population and
+  provides an approximation to the problem's Pareto front. Both
+  \code{solution_list} and \code{df_solutions} include all retained fronts.
+
+  Each solution also stores \code{accuracy}, \code{precision}, \code{recall},
+  \code{f1}, \code{kappa}, \code{auc}, and \code{conf_matrix}. These metrics
+  are calculated on the data used for optimization, with class 1 treated as
+  positive. The confusion matrix has true classes in rows and predicted
+  classes in columns, ordered as -1, 1.
 }
 \examples{
 data <- data.frame(
@@ -24,4 +50,14 @@ data <- data.frame(
 obj <- svm_fs_meta(data, inputs = c("x1", "x2"), output = "y",
                   pop_size = 4, num_fea = 2, n_iter = 1)
 res <- run.svm_fs_meta(obj)
+front <- res$population$df_solutions
+front <- front[front$FRONT == 1, , drop = FALSE]
+front_solutions <- Filter(function(s) s$front == 1,
+                          res$population$solution_list)
+selected <- front_solutions[[1]]
+selected$features
+selected$plane_coord
+selected$plane_term_b
+selected[c("accuracy", "precision", "recall", "f1", "kappa", "auc",
+           "conf_matrix")]
 }
