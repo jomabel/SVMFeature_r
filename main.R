@@ -2,7 +2,6 @@
 
 suppressPackageStartupMessages({
   library(dplyr)
-  library(readr)
   library(ggplot2)
   library(glue)
   library(scales)
@@ -38,10 +37,7 @@ simulate <- function(method, data_scaled, population_size, input_cols, output_co
 }
 
 # ======= Parameter configuration =======
-dataset         <- "data/09Colon_p.txt"
-has_header      <- FALSE
-has_index       <- TRUE
-separator       <- ";"
+dataset         <- "Colon"
 method          <- "DIST-EPS"
 population_size <- 10
 num_features    <- 5
@@ -58,40 +54,27 @@ p_mut_coord     <- 0.2
 mut_coord       <- 0
 
 # ====== Dataset loading and preprocessing ======
-# These steps are essential to prepare raw data for the svm_fs_meta library.
 message("Loading dataset...")
 
-data <- tryCatch({
-  # read_delim is used for flexibility with large bioinformatics datasets.
-  # show_col_types = FALSE silences the automatic column type detection message.
-  df <- read_delim(dataset, delim = separator, col_names = has_header, show_col_types = FALSE)
-  as.data.frame(df) # The library expects a standard data.frame, not a tibble.
-}, error = function(e) {
-  stop(glue::glue("Error loading dataset: {e$message}"))
-})
-
-# 1. Remove index column if present (it doesn't provide predictive value)
-if (has_index) {
-  data <- data[,-1]
+if (!requireNamespace("plsgenomics", quietly = TRUE)) {
+  stop("Install the example data package with install.packages('plsgenomics').",
+       call. = FALSE)
 }
 
-# 2. Standardize column names if the file has no header.
-# We assume the first column is the target (y) and the rest are features (x1, x2...).
-if (!has_header) {
-  num_cols <- ncol(data)
-  names(data) <- c("y", paste0("x", 1:(num_cols-1)))
-}
+# Load the example from its source package without attaching it.
+dataset_env <- new.env(parent = baseenv())
+utils::data(list = dataset, package = "plsgenomics", envir = dataset_env)
+colon_data <- dataset_env[[dataset]]
+
+# plsgenomics codes normal tissue as 1 and tumor tissue as 2.
+# Keep the previous convention: normal = 1 and tumor = -1.
+data <- data.frame(y = ifelse(colon_data$Y == 2, -1, 1), colon_data$X)
+names(data) <- c("y", paste0("x", seq_len(ncol(colon_data$X))))
 
 output_col <- names(data)[1]
 input_cols <- names(data)[-1]
 
-
-# 3. Binary Classification target check.
-# The current SVM implementation requires binary labels (e.g., -1 and 1).
-# We filter the dataset to ensure only these two classes are present.
-data <- data[data[[output_col]] %in% c(-1, 1), ]
-
-# 4. Normalize input features (Min-Max scaling to [0, 1]).
+# Normalize input features (Min-Max scaling to [0, 1]).
 # Normalization is performed outside the library.
 if (normalize) {
   scaler <- function(x) {
@@ -119,7 +102,7 @@ result <- simulate(method, data_scaled, population_size, input_cols, output_col,
 
 # ===== Result Export and Visualization =====
 # save_results() exports the Pareto front to a CSV file in the 'results/' directory.
-dataset_name <- tools::file_path_sans_ext(basename(dataset))
+dataset_name <- tolower(dataset)
 save_results(result, "results", dataset_name = dataset_name)
 
 # draw_solution() provides a visual representation of the Pareto front using ggplot2.

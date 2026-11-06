@@ -26,22 +26,20 @@ devtools::install_github("jomabel/SVMFeature_r")
 
 ## 💻 Basic Usage
 
-The library is designed to work with structured bioinformatics datasets (no headers, index column, and class labels in the first column).
+The library accepts data frames with numeric predictors and a binary response encoded as `-1` and `1`. This example loads `Colon` from the optional `plsgenomics` package: 62 observations and 2,000 gene-expression predictors. Install the example dependency with `install.packages("plsgenomics")` if necessary. Its original classes are recoded from `1` (normal tissue) to `1`, and from `2` (tumor tissue) to `-1`.
 
 ```r
 library(svmfsmeta)
-library(readr)
 
-# 1. Load the dataset (example: 09Colon_p.txt)
-dataset_file <- "data/09Colon_p.txt"
-data <- as.data.frame(read_delim(dataset_file, delim = ";", col_names = FALSE, show_col_types = FALSE))
+# 1. Load Colon from the optional example dependency
+if (!requireNamespace("plsgenomics", quietly = TRUE)) {
+  stop("Install the example dependency with install.packages('plsgenomics').")
+}
+data("Colon", package = "plsgenomics")
+data <- data.frame(y = ifelse(Colon$Y == 2, -1, 1), Colon$X)
+names(data) <- c("y", paste0("x", seq_len(ncol(Colon$X))))
 
-# 2. Preprocess: drop index, rename columns, and filter binary labels
-data <- data[,-1]
-names(data) <- c("y", paste0("x", 1:(ncol(data)-1)))
-data <- data[data$y %in% c(-1, 1), ]
-
-# 3. Normalize input features (Min-Max scaling to [0, 1])
+# 2. Normalize input features (Min-Max scaling to [0, 1])
 input_cols <- names(data)[-1]
 scaler <- function(x) {
   rng <- range(x, na.rm = TRUE)
@@ -50,7 +48,8 @@ scaler <- function(x) {
 }
 data[, input_cols] <- as.data.frame(lapply(data[, input_cols], scaler))
 
-# 4. Initialize and run the optimizer
+# 3. Initialize the optimizer
+set.seed(42)
 obj <- svm_fs_meta(
   data = data,
   inputs = names(data)[-1],
@@ -62,13 +61,15 @@ obj <- svm_fs_meta(
   objective = "DIST-EPS"
 )
 
-# 5. Execute optimization
+# 4. Execute optimization
 result <- run.svm_fs_meta(obj)
 
-# 6. Visualize and Save
+# 5. Visualize and save
 draw_solution(result)
-save_results(result, output_dir = tempdir(), dataset_name = "09Colon_p")
+save_results(result, output_dir = tempdir(), dataset_name = "colon")
 ```
+
+The dataset is described by [Alon et al. (1999)](https://doi.org/10.1073/pnas.96.12.6745). See `help("Colon", package = "plsgenomics")` for its source and documentation. Predictor names are assigned as `x1` to `x2000` in this example; the original gene identifiers remain available in `Colon$gene.names`.
 
 ---
 
