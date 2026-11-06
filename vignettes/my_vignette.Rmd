@@ -7,10 +7,14 @@ vignette: >
   %\VignetteEncoding{UTF-8}
 ---
 
-```{r, include = FALSE}
+```{r setup, include = FALSE, eval = TRUE}
+has_colon_data <- requireNamespace("plsgenomics", quietly = TRUE)
 knitr::opts_chunk$set(
   collapse = TRUE,
-  comment = "#>"
+  comment = "#>",
+  eval = has_colon_data,
+  error = FALSE,
+  message = FALSE
 )
 ```
 
@@ -75,9 +79,9 @@ To demonstrate the usage, we will load `Colon` directly from `plsgenomics`.
 
 ### 1. Data Preprocessing
 
-We build a local data frame with the response encoding required by `svmfsmeta`, then normalize its predictors before fitting. This executable example is skipped when the optional `plsgenomics` package is unavailable.
+We build a local data frame with the response encoding required by `svmfsmeta`, then normalize its predictors before fitting. All workflow chunks, from loading data through export, are skipped when the optional `plsgenomics` package is unavailable.
 
-```{r colon-data, eval=requireNamespace("plsgenomics", quietly=TRUE)}
+```{r colon-data}
 library(svmfsmeta)
 
 # 1. Load Colon and recode its response: 1 (normal) -> 1, 2 (tumor) -> -1
@@ -98,8 +102,7 @@ data[, input_cols] <- as.data.frame(lapply(data[, input_cols], scaler))
 ### 2. Running the NSGA-II Simulation
 
 Once the data is prepared, we define the inputs and target, and run the optimization.
-
-```r
+```{r colon-optimize, results='hide'}
 # Define input and output column names
 input_cols <- names(data)[-1]
 output_col <- names(data)[1]
@@ -134,7 +137,7 @@ result <- run.svm_fs_meta(obj)
 
 `run.svm_fs_meta()` returns an updated S3 object of class `svm_fs_meta`, retaining the original data and configuration. Its `population` field contains the final population. The summary table includes all retained fronts; rows with `FRONT == 1` form the first non-dominated front of that population, which approximates the Pareto front.
 
-```r
+```{r colon-inspect}
 solutions_table <- result$population$df_solutions
 pareto_front <- solutions_table[solutions_table$FRONT == 1, , drop = FALSE]
 
@@ -155,18 +158,20 @@ Here the first front candidate is inspected. Candidate selection depends on the 
 
 You can visualize the resulting Pareto front using the `draw_solution` function.
 
-```r
+```{r colon-plot, fig.width=6, fig.height=4}
 # Plot the first front of solutions
 draw_solution(result)
 ```
 
 ### 4. Exporting Results
 
-The Pareto front solutions can be saved to a CSV file.
+The Pareto front solutions can be saved to a CSV file. This example writes them inside a new temporary directory.
 
-```r
+```{r colon-export}
 # Export non-dominated solutions
-save_results(result, output_dir = tempdir(), dataset_name = "colon")
+output_dir <- tempfile("svmfsmeta-colon-")
+output_file <- save_results(result, output_dir = output_dir, dataset_name = "colon")
+file.exists(output_file)
 ```
 
 ## Conclusion

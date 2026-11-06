@@ -1,4 +1,4 @@
-# 🧠 SVMFsMeta: Multi-objective SVM Classifier with Feature Selection
+# 🧠 SVM_FS_Meta: Multi-objective SVM Classifier with Feature Selection via Metaheuristics
 
 `svmfsmeta` is an R package for binary **soft-margin Support Vector Machine (SVM)** classification with **Feature Selection**, based on the methodologies studied by Valero-Carreras et al. (2023) and Alcaraz (2024).
 
@@ -96,7 +96,8 @@ Initializes the optimization object.
 | `p_mutation` | `numeric` | `0.7` | Global mutation probability. |
 | `p_mut_ind` | `numeric` | `0.4` | Probability of mutating an individual. |
 | `p_mut_fea` | `numeric` | `0.4` | Probability of mutating a feature selection. |
-| `p_mut_coord` | `numeric` | `0.2` | Probability of mutating hyperplane coordinates. |
+| `p_mut_coord` | `numeric` | `0.2` | Probability of mutating hyperplane coordinates. |
+
 | `mut_coord` | `numeric` | `0` | Mutation strategy on coordinates (0: Scaling, 1: Full replacement). |
 
 ### `run.svm_fs_meta(object)`
