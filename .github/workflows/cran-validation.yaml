@@ -74,14 +74,18 @@ jobs:
             any::V8
           needs: check
           install-pandoc: true
-      - name: Install manual fonts
+      - name: Prepare manual toolchain
         shell: Rscript {0}
         run: |
-          tinytex::tlmgr_install(c('courier', 'times', 'helvetic', 'inconsolata', 'nameref'))
+          tinytex::tlmgr_install(c('courier', 'times', 'helvetic', 'inconsolata', 'nameref', 'makeindex'))
           font <- system2('kpsewhich', 'pcrr8t.tfm', stdout = TRUE)
           stopifnot(length(font) > 0L, file.exists(font[1L]))
           link_style <- system2('kpsewhich', 'nameref.sty', stdout = TRUE)
           stopifnot(length(link_style) > 0L, file.exists(link_style[1L]))
+          stopifnot(nzchar(Sys.which('makeindex')))
+          writeLines('\\indexentry{check}{1}', 'index-preflight.idx')
+          index_status <- system2('makeindex', 'index-preflight.idx')
+          stopifnot(index_status == 0L, file.exists('index-preflight.ind'))
       - name: Check exact source archive
         shell: Rscript {0}
         run: |
