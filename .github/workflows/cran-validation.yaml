@@ -30,7 +30,6 @@ jobs:
           retention-days: 7
   current-r:
     name: '${{ matrix.config.id }}'
-    if: ${{ false }}
     needs: build_source
     runs-on: ${{ matrix.config.os }}
     timeout-minutes: 45
@@ -78,9 +77,11 @@ jobs:
       - name: Install manual fonts
         shell: Rscript {0}
         run: |
-          tinytex::tlmgr_install(c('courier', 'times', 'helvetic', 'inconsolata'))
+          tinytex::tlmgr_install(c('courier', 'times', 'helvetic', 'inconsolata', 'nameref'))
           font <- system2('kpsewhich', 'pcrr8t.tfm', stdout = TRUE)
           stopifnot(length(font) > 0L, file.exists(font[1L]))
+          link_style <- system2('kpsewhich', 'nameref.sty', stdout = TRUE)
+          stopifnot(length(link_style) > 0L, file.exists(link_style[1L]))
       - name: Check exact source archive
         shell: Rscript {0}
         run: |
@@ -107,6 +108,8 @@ jobs:
           retention-days: 7
   minimum-r:
     name: linux-r-4.1.3
+    # This exact archive is already being checked with R 4.1.3 in the first run.
+    if: ${{ false }}
     needs: build_source
     runs-on: ubuntu-24.04
     container: rocker/r-ver:4.1.3
@@ -121,7 +124,7 @@ jobs:
       - name: Install system libraries
         run: |
           apt-get update
-          apt-get install -y --no-install-recommends git curl ca-certificates qpdf gfortran libcurl4-openssl-dev libssl-dev libxml2-dev
+          apt-get install -y --no-install-recommends git curl ca-certificates pandoc gfortran libcurl4-openssl-dev libssl-dev libxml2-dev
       - uses: actions/download-artifact@v4
         with:
           name: source-svmfsmeta-0.1.0
@@ -132,9 +135,6 @@ jobs:
           install-r: false
           use-public-rspm: false
           cran: https://cloud.r-project.org
-      - uses: r-lib/actions/setup-pandoc@v2
-        with:
-          pandoc-version: '3.1.13'
       - name: Extract dependency metadata
         shell: Rscript {0}
         run: |
