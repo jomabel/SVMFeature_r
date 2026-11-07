@@ -10,7 +10,8 @@ print_population(population)
 \item{population}{population class object}
 }
 \value{
-Prints the population in the console
+Invisibly returns the population as a data frame, ordered by front,
+after printing it to the console.
 }
 \description{
 This function prints the population.

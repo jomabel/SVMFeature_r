@@ -115,7 +115,8 @@ generate_initial_population <- function(population, data, inputs, output) {
 #'
 #' @param population population class object
 #'
-#' @return Prints the population in the console
+#' @return Invisibly returns the population as a data frame, ordered by front,
+#'   after printing it to the console.
 #'
 #' @export
 #'
@@ -150,6 +151,9 @@ print_population <- function(population) {
 
   # Sort the data frame by the 'FRONT' column
   df_solutions <- df_solutions[order(df_solutions$FRONT), ]
+
+  print(df_solutions)
+  invisible(df_solutions)
 }
 
 
@@ -810,4 +814,3 @@ crowding_distance <- function(population, num_front) {
 
   return(front_solutions)
 }
-
