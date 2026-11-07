@@ -93,9 +93,10 @@ to_dict <- function(solution) {
 #' @param solution solution class object containing the dataset
 #' @param clazz Class for which to obtain a vector
 #' @param data A data.frame with the input features
-#' @param output A vector with class labels
+#' @param output The name of the response column containing class labels.
 #'
-#' @return Index of the random class vector
+#' @return An integer row index for the requested class, or \code{NA_integer_}
+#'   when the class is absent.
 #' @export
 #'
 #' @examples
@@ -105,9 +106,9 @@ to_dict <- function(solution) {
 get_class_vector <- function(solution, clazz, data, output) {
   indices <- which(data[[output]] == clazz)
   if (length(indices) > 0) {
-    return(sample(indices, 1))
+    return(indices[sample.int(length(indices), 1)])
   } else {
-    return(NA)  # NA is a numeric value in R, indicating 'not available'
+    return(NA_integer_)
   }
 }
 
@@ -264,6 +265,27 @@ calculate_distance_objective <- function(solution) {
   return(solution)
 }
 
+.invalidate_solution_evaluation <- function(solution) {
+  solution$successful_evaluation <- FALSE
+  solution$objective <- rep(NA_real_, 4L)
+  solution[c("accuracy", "precision", "recall", "f1", "kappa", "auc",
+             "conf_matrix")] <- NULL
+  solution
+}
+
+.has_distinct_margin_planes <- function(solution) {
+  intercepts <- solution$plane_term_b
+  if (!is.numeric(intercepts) || is.complex(intercepts) ||
+      !is.null(dim(intercepts)) || length(intercepts) != 3L ||
+      any(!is.finite(intercepts))) {
+    return(FALSE)
+  }
+
+  gap <- abs(intercepts[1L] - intercepts[2L])
+  tolerance <- 2 * .Machine$double.eps * max(abs(intercepts[1:2]))
+  is.finite(gap) && gap > tolerance
+}
+
 
 
 #' @title Method to Calculate the Epsilon Objective
@@ -278,6 +300,9 @@ calculate_distance_objective <- function(solution) {
 #'   matrix of the intermediate classifier, with class 1 positive. A score of
 #'   zero is assigned to class 1. The two types of objective are calculated for
 #'   both optimization modes.
+#'   Coincident or numerically indistinguishable margin planes are rejected:
+#'   the returned solution has \code{successful_evaluation = FALSE}, all four
+#'   objectives set to \code{NA_real_}, and no cached classification metrics.
 #'
 #' @param solution solution class object containing data and features for classification
 #' @param data A data.frame with the input features.
@@ -296,6 +321,11 @@ calculate_distance_objective <- function(solution) {
 #' sol <- construct_planes(sol, data)
 #' sol <- calculate_epsilon_objective(sol, data, "y")
 calculate_epsilon_objective <- function(solution, data, output) {
+  if (!.has_distinct_margin_planes(solution)) {
+    message("The solution cannot be evaluated: margin planes must be finite and distinct.")
+    return(.invalidate_solution_evaluation(solution))
+  }
+
   # Initialize epsilon and classification-error counts.
   solution$objective[[2]] <- 0
   solution$objective[[3]] <- 0
@@ -471,12 +501,17 @@ calculate_metrics <- function(solution, y_true, y_pred, decision_scores){
 #'   Normal coordinates must be a non-empty vector of finite real numbers,
 #'   with one coefficient per selected feature. Their computed squared
 #'   Euclidean norm must be finite and strictly positive. Nonzero normals
-#'   remain valid when their coefficients sum to zero. Invalid normals return
-#'   the solution with \code{successful_evaluation = FALSE}.
+#'   remain valid when their coefficients sum to zero. Margin-plane intercepts
+#'   must be finite, and their separation must exceed
+#'   \code{2 * .Machine$double.eps * max(abs(b[1:2]))}, where \code{b} contains
+#'   the plane intercepts. This relative tolerance preserves the test when the
+#'   normal is rescaled. Invalid normals, indistinguishable margins, or
+#'   non-finite objectives return \code{successful_evaluation = FALSE}, all
+#'   four objectives set to \code{NA_real_}, and no cached classification metrics.
 #'
 #' @param solution solution class object to be evaluated
 #' @param data A data.frame with the input features
-#' @param output A vector with class labels
+#' @param output The name of the response column containing labels -1 and 1.
 #'
 #' @return solution class object with updated evaluation status and objectives
 #'
@@ -488,6 +523,7 @@ calculate_metrics <- function(solution, y_true, y_pred, decision_scores){
 #' sol <- generate_random_solution(sol, data, c("x1", "x2"), "y")
 #' sol <- evaluate_solution(sol, data, "y")
 evaluate_solution <- function(solution, data, output) {
+  solution <- .invalidate_solution_evaluation(solution)
   normal_coordinates <- solution$plane_coord
   valid_coordinates <- is.numeric(normal_coordinates) &&
     !is.complex(normal_coordinates) && is.null(dim(normal_coordinates)) &&
@@ -501,20 +537,24 @@ evaluate_solution <- function(solution, data, output) {
       "The solution cannot be evaluated: the normal must have one finite real ",
       "coefficient per selected feature and a positive finite squared norm."
     ))
-    solution$successful_evaluation <- FALSE
-    return(solution)
-  } else {
-    # Procedures to evaluate the solution if there are valid coordinates
-    solution <- construct_planes(solution, data)
-
-    solution <- svmfsmeta::calculate_distance_objective(solution)
-    solution <- svmfsmeta::calculate_epsilon_objective(solution, data, output)
-
-
-    # Assume evaluations were successful if this point is reached
-    solution$successful_evaluation <- TRUE
     return(solution)
   }
+
+  solution <- construct_planes(solution, data)
+  if (!.has_distinct_margin_planes(solution)) {
+    message("The solution cannot be evaluated: margin planes must be finite and distinct.")
+    return(solution)
+  }
+
+  solution <- svmfsmeta::calculate_distance_objective(solution)
+  solution <- svmfsmeta::calculate_epsilon_objective(solution, data, output)
+  if (!is_valid_solution(solution) || any(!is.finite(solution$objective))) {
+    message("The solution cannot be evaluated: objectives must be finite and valid.")
+    return(.invalidate_solution_evaluation(solution))
+  }
+
+  solution$successful_evaluation <- TRUE
+  return(solution)
 }
 
 
@@ -568,7 +608,12 @@ dominate <- function(solution1, solution2) {
 #'
 #' @description
 #'   This function determines if the objectives of a given solution
-#'   contain numerical values.
+#'   contain finite real numerical values for a supported objective pair.
+#'
+#' @details
+#'   Only the active objective entries are checked: entries 1 and 2 for
+#'   \code{DIST-EPS}, or entries 3 and 4 for \code{MC}. The objectives must
+#'   be stored in a numeric vector, and the objective-pair name must be valid.
 #'
 #' @param solution A solution object
 #'
@@ -581,19 +626,22 @@ dominate <- function(solution1, solution2) {
 #' sol$objective <- c(1, 0, 0, 0)
 #' is_valid_solution(sol)
 is_valid_solution <- function(solution) {
-  if (solution$obj_fn == 'DIST-EPS') {
-    if (is.na(solution$objective[[1]]) || !is.numeric(solution$objective[[1]]) ||
-        is.na(solution$objective[[2]]) || !is.numeric(solution$objective[[2]])) {
-      return(FALSE)
-    }
-  } else if (solution$obj_fn == 'MC') {
-    if (is.na(solution$objective[[3]]) || !is.numeric(solution$objective[[3]]) ||
-        is.na(solution$objective[[4]]) || !is.numeric(solution$objective[[4]])) {
-      return(FALSE)
-    }
+  if (!is.list(solution)) {
+    return(FALSE)
   }
 
-  return(TRUE)
+  objective_pair <- solution[["obj_fn"]]
+  if (!is.character(objective_pair) || !is.null(dim(objective_pair)) ||
+      length(objective_pair) != 1L || is.na(objective_pair) ||
+      !objective_pair %in% c("DIST-EPS", "MC")) {
+    return(FALSE)
+  }
+
+  active_objectives <- if (objective_pair == "DIST-EPS") c(1L, 2L) else c(3L, 4L)
+  objectives <- solution[["objective"]]
+  is.numeric(objectives) && !is.complex(objectives) &&
+    is.null(dim(objectives)) && length(objectives) >= max(active_objectives) &&
+    all(is.finite(objectives[active_objectives]))
 }
 
 
@@ -678,9 +726,14 @@ compare_solutions <- function(solution1, solution2) {
 #' @description
 #'   This function mutates the vectors in the solution by assigning new class vectors.
 #'
+#' @details
+#'   Each replacement is sampled directly from observations of the same class,
+#'   excluding the current vector. If no alternative exists, the current vector
+#'   is retained.
+#'
 #' @param solution solution class object to mutate
 #' @param data A data.frame with the input features.
-#' @param output A vector with class labels.
+#' @param output The name of the response column containing class labels.
 #'
 #' @return solution class object with updated vectors
 #'
@@ -697,16 +750,17 @@ mutate_vectors <- function(solution, data, output) {
 
   # Iterate over each class
   for (i in seq_along(classes)) {
-    # Call get_class_vector for the current class
-    vector <- get_class_vector(solution, classes[i], data, output)
-
-    # Verify that the new vector is different from the current one; if not, find another
-    while (identical(vector, solution$vectors[[i]])) {
-      vector <- get_class_vector(solution, classes[i], data, output)
+    indices <- which(data[[output]] == classes[i])
+    current_vector <- if (i <= length(solution$vectors)) {
+      solution$vectors[[i]]
+    } else {
+      integer()
     }
+    candidates <- indices[!indices %in% current_vector]
 
-    # Update the vector in the solution
-    solution$vectors[[i]] <- vector
+    if (length(candidates) > 0L) {
+      solution$vectors[[i]] <- candidates[sample.int(length(candidates), 1)]
+    }
   }
 
   return(solution)

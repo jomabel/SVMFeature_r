@@ -11,7 +11,7 @@ evaluate_solution(solution, data, output)
 
 \item{data}{A data.frame with the input features}
 
-\item{output}{A vector with class labels}
+\item{output}{The name of the response column containing labels -1 and 1.}
 }
 \value{
 solution class object with updated evaluation status and objectives
@@ -23,8 +23,13 @@ This function evaluates a solution by calculating its objectives.
 Normal coordinates must be a non-empty vector of finite real numbers,
 with one coefficient per selected feature. Their computed squared
 Euclidean norm must be finite and strictly positive. Nonzero normals
-remain valid when their coefficients sum to zero. Invalid normals return
-the solution with \code{successful_evaluation = FALSE}.
+remain valid when their coefficients sum to zero. Margin-plane intercepts
+must be finite, and their separation must exceed
+\code{2 * .Machine$double.eps * max(abs(b[1:2]))}, where \code{b} contains
+the plane intercepts. This relative tolerance preserves the test when the
+normal is rescaled. Invalid normals, indistinguishable margins, or
+non-finite objectives return \code{successful_evaluation = FALSE}, all
+four objectives set to \code{NA_real_}, and no cached classification metrics.
 }
 \examples{
 data <- data.frame(x1 = rnorm(4), x2 = rnorm(4), y = c(-1, 1, 1, -1))

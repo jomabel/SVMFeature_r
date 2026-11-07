@@ -52,6 +52,11 @@ population <- function(pop_size, num_features, clones = 0, p_mutation = 0.7,
 #' @description
 #'   This function generates the initial population.
 #'
+#' @details
+#'   Existing candidates are retained. Generation stops with an error after
+#'   100 consecutive invalid or forbidden duplicate candidates. Accepting a
+#'   candidate resets this counter.
+#'
 #' @param population population class object
 #' @param data A data.frame with the input features
 #' @param inputs A vector of input features
@@ -71,7 +76,9 @@ population <- function(pop_size, num_features, clones = 0, p_mutation = 0.7,
 #' pop <- generate_initial_population(pop, data, c("x1", "x2"), "y")
 generate_initial_population <- function(population, data, inputs, output) {
   message(sprintf("Creating initial population of size %d", population$pop_size))
-  num_sol <- 0
+  num_sol <- length(population$solution_list)
+  consecutive_rejections <- 0L
+  max_rejections <- 100L
 
   while (length(population$solution_list) < population$pop_size) {
     # Create and generate a random solution
@@ -79,19 +86,22 @@ generate_initial_population <- function(population, data, inputs, output) {
     sol <- generate_random_solution(sol, data, inputs, output)
     sol <- evaluate_solution(sol, data, output)
 
-    # Check if the solution was successfully evaluated
-    if (sol$successful_evaluation) {
-      # Additional clone check if necessary
-      if (population$clones == 1 || check_clones(population, sol) == 0) {
-        # Add the evaluated and updated solution to the population
-        population$solution_list[[num_sol + 1]] <- sol
-        num_sol <- num_sol + 1
-      } else {
-        message("Detected and skipped clone.")
+    if (!isTRUE(sol$successful_evaluation) ||
+        (population$clones == 0 && check_clones(population, sol) == 1)) {
+      consecutive_rejections <- consecutive_rejections + 1L
+      if (consecutive_rejections >= max_rejections) {
+        stop(sprintf(
+          paste0("Unable to generate the initial population after %d consecutive rejections. ",
+                 "Check the data and the clone settings."),
+          max_rejections
+        ), call. = FALSE)
       }
-    } else {
-      message("Disregarded invalid solution.")
+      next
     }
+
+    consecutive_rejections <- 0L
+    population$solution_list[[num_sol + 1L]] <- sol
+    num_sol <- num_sol + 1L
   }
   return(population)
 }
@@ -204,6 +214,10 @@ check_clones <- function(population, solution_eva) {
 #' @description
 #'   This function performs the Fast Non-Dominated Sorting on a given population.
 #'
+#' @details
+#'   An empty population has no fronts. A population containing one candidate
+#'   places that candidate in the first front.
+#'
 #' @param population population class object
 #'
 #' @return Updated population class object with sorted fronts
@@ -221,11 +235,15 @@ check_clones <- function(population, solution_eva) {
 #' pop <- fnds(pop)
 fnds <- function(population) {
   pop_size <- length(population$solution_list)
+  if (pop_size == 0L) {
+    population$fronts <- list()
+    return(population)
+  }
   fronts <- list()
   front <- list(solutions = numeric())
 
   # Initialize solutions
-  for (i in 1:pop_size) {
+  for (i in seq_len(pop_size)) {
     population$solution_list[[i]]$sol_dom_by <- 0
     population$solution_list[[i]]$dominates_list <- list()
     population$solution_list[[i]]$list_dominated_by <- list()
@@ -233,8 +251,8 @@ fnds <- function(population) {
   }
 
   # Calculate dominance
-  for (n in 1:(pop_size - 1)) {
-    for (s in (n + 1):pop_size) {
+  for (n in seq_len(pop_size - 1L)) {
+    for (s in seq.int(n + 1L, pop_size)) {
       if (dominate(population$solution_list[[n]], population$solution_list[[s]])) {
         population$solution_list[[n]]$dominates_list <- unique(c(population$solution_list[[n]]$dominates_list, s))
         population$solution_list[[s]]$list_dominated_by <- unique(c(population$solution_list[[s]]$list_dominated_by, n))
@@ -249,7 +267,7 @@ fnds <- function(population) {
   }
 
   # Assign front 1 to non-dominated solutions
-  for (i in 1:pop_size) {
+  for (i in seq_len(pop_size)) {
     if (population$solution_list[[i]]$sol_dom_by == 0) {
       front$solutions <- c(front$solutions, i)
       population$solution_list[[i]]$front <- 1
@@ -421,6 +439,8 @@ crossover_solutions <- function(population, parent, mother, num, data, output) {
 #'   This method uses the concept of dominance in multi-objective optimization to compare the two offspring.
 #'   If one offspring dominates the other, the dominant one is selected. If neither dominates the other,
 #'   the tie is broken randomly.
+#'   A candidate with valid active objectives is preferred to an invalid
+#'   candidate before applying dominance. Two invalid candidates tie.
 #'
 #' @param child1 The first offspring to compare.
 #' @param child2 The second offspring to compare.
@@ -438,6 +458,15 @@ crossover_solutions <- function(population, parent, mother, num, data, output) {
 #' sol2$objective <- c(0, 1, 1, 1)
 #' best_offspring <- select_best_offspring(sol1, sol2)
 select_best_offspring <- function(child1, child2) {
+  valid1 <- is_valid_solution(child1)
+  valid2 <- is_valid_solution(child2)
+  if (valid1 && !valid2) {
+    return(list(winner = child1, loser = child2))
+  }
+  if (valid2 && !valid1) {
+    return(list(winner = child2, loser = child1))
+  }
+
   dominates <- dominate2(child1, child2)
   if (dominates == 1) {        # child1 dominates child2
     return(list(winner = child1, loser = child2))
@@ -540,6 +569,10 @@ new_population <- function(population, data, inputs, output) {
 #' @description
 #'   This function mutates a solution based on mutation probabilities and coordinates.
 #'
+#' @details
+#'   In the scaling strategy, a mutated coordinate outside \code{[-1, 1]}
+#'   is divided by ten, applying the same correction to either sign.
+#'
 #' @param solution solution object to mutate
 #' @param population population class object that contains mutation parameters
 #' @param data A data.frame with the input features
@@ -591,14 +624,11 @@ mutate_solution <- function(solution, population, data, inputs, output) {
         rand_direction <- runif(1)
         if (rand_direction < 0.5) {  # increment
           solution$plane_coord[i] <- solution$plane_coord[i] * (1 + percentage)
-          if (solution$plane_coord[i] > 1) {
-            solution$plane_coord[i] <- solution$plane_coord[i] / 10
-          }
         } else {  # decrement
           solution$plane_coord[i] <- solution$plane_coord[i] * (1 - percentage)
-          if (solution$plane_coord[i] < -1) {
-            solution$plane_coord[i] <- solution$plane_coord[i] / 10
-          }
+        }
+        if (abs(solution$plane_coord[i]) > 1) {
+          solution$plane_coord[i] <- solution$plane_coord[i] / 10
         }
       } else {
         solution$plane_coord[i] <- runif(1, -1, 1)
@@ -620,6 +650,8 @@ mutate_solution <- function(solution, population, data, inputs, output) {
 #'   The returned population retains the input population's optimization settings.
 #'   Its fronts and cached solution summaries are cleared for recalculation
 #'   after selection.
+#'   If its size is already at or below the target, all candidates are retained.
+#'   Larger populations must have complete fronts from \code{fnds()}.
 #'
 #' @param population population class object to reduce
 #'
@@ -655,10 +687,20 @@ reduce_population <- function(population) {
     objective = population$objective
   )
 
+  if (length(population$solution_list) <= population$pop_size) {
+    new_population$solution_list <- population$solution_list
+    for (i in seq_along(new_population$solution_list)) {
+      new_population$solution_list[[i]]$num <- i - 1L
+    }
+    return(new_population)
+  }
+
   # Front counter
   front_counter <- 1
   # Add solutions from the fronts to the new population until sizing is complete
-  while (length(new_population$solution_list) +
+  while (front_counter <= length(population$fronts) &&
+         length(new_population$solution_list) < population$pop_size &&
+         length(new_population$solution_list) +
          length(population$fronts[[front_counter]]$solutions) <= population$pop_size)
   {
     front_solutions <- lapply(population$solution_list, function(sol) {
@@ -676,7 +718,16 @@ reduce_population <- function(population) {
   {
     front_solutions <- crowding_distance(population, front_counter)
     remaining <- population$pop_size - length(new_population$solution_list)
+    if (length(front_solutions) < remaining) {
+      stop("Population fronts are incomplete; call fnds() before reducing the population.",
+           call. = FALSE)
+    }
     new_population$solution_list <- c(new_population$solution_list, front_solutions[1:remaining])
+  }
+
+  if (length(new_population$solution_list) < population$pop_size) {
+    stop("Population fronts are incomplete; call fnds() before reducing the population.",
+         call. = FALSE)
   }
 
   # Rename the solutions

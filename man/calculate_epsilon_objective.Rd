@@ -15,19 +15,22 @@ calculate_epsilon_objective(solution, data, output)
 }
 \value{
 The solution list with epsilon in \code{objective[2]}, false
-  negatives in \code{objective[3]}, false positives in \code{objective[4]},
-  and classification metrics calculated from the intermediate classifier.
+negatives in \code{objective[3]}, false positives in \code{objective[4]},
+and classification metrics calculated from the intermediate classifier.
 }
 \description{
 Calculates the sum of margin-violation distances for epsilon and the
-  classification-error counts used by the MC objective pair.
+classification-error counts used by the MC objective pair.
 }
 \details{
 Epsilon is calculated against each observation's class-specific margin
-  plane. False negatives and false positives are taken from the confusion
-  matrix of the intermediate classifier, with class 1 positive. A score of
-  zero is assigned to class 1. The two types of objective are calculated for
-  both optimization modes.
+plane. False negatives and false positives are taken from the confusion
+matrix of the intermediate classifier, with class 1 positive. A score of
+zero is assigned to class 1. The two types of objective are calculated for
+both optimization modes.
+Coincident or numerically indistinguishable margin planes are rejected:
+the returned solution has \code{successful_evaluation = FALSE}, all four
+objectives set to \code{NA_real_}, and no cached classification metrics.
 }
 \examples{
 data <- data.frame(x1 = rnorm(4), x2 = rnorm(4), y = c(-1, 1, 1, -1))

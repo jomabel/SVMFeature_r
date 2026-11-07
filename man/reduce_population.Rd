@@ -19,6 +19,8 @@ This function reduces the population size based on fronts and crowding distance.
 The returned population retains the input population's optimization settings.
 Its fronts and cached solution summaries are cleared for recalculation
 after selection.
+If its size is already at or below the target, all candidates are retained.
+Larger populations must have complete fronts from \code{fnds()}.
 }
 \examples{
 set.seed(42)
