@@ -11,9 +11,9 @@ generate_initial_population(population, data, inputs, output)
 
 \item{data}{A data.frame with the input features}
 
-\item{inputs}{A vector of input features}
+\item{inputs}{A character vector containing predictor column names.}
 
-\item{output}{A vector with class labels}
+\item{output}{The name of the response column containing labels -1 and 1.}
 }
 \value{
 population class object updated with the generated initial population

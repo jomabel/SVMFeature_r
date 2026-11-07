@@ -51,13 +51,13 @@ and export of the results.
 
 ## Installation
 
-You can install the `svmfsmeta` package from CRAN using the following command:
+Once `svmfsmeta` has been accepted and published on CRAN, its released version will be installable with:
 
 ```r
 install.packages("svmfsmeta")
 ```
 
-Alternatively, you can install the development version of the package from GitHub:
+In the meantime, install the development version of the package from GitHub:
 
 ```r
 devtools::install_github("jomabel/SVMFeature_r")

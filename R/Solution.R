@@ -121,8 +121,8 @@ get_class_vector <- function(solution, clazz, data, output) {
 #'
 #' @param solution solution class object to modify
 #' @param data A data.frame with the input features
-#' @param inputs A vector of input features
-#' @param output A vector with class labels
+#' @param inputs A character vector containing predictor column names.
+#' @param output The name of the response column containing labels -1 and 1.
 #'
 #' @importFrom stats runif
 #'

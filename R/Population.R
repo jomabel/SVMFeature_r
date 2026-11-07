@@ -59,8 +59,8 @@ population <- function(pop_size, num_features, clones = 0, p_mutation = 0.7,
 #'
 #' @param population population class object
 #' @param data A data.frame with the input features
-#' @param inputs A vector of input features
-#' @param output A vector with class labels
+#' @param inputs A character vector containing predictor column names.
+#' @param output The name of the response column containing labels -1 and 1.
 #'
 #' @return population class object updated with the generated initial population
 #'
@@ -351,7 +351,7 @@ tournament_select_parent <- function(population) {
 #' @param mother Second parent solution
 #' @param num Unique identifier for the new solutions
 #' @param data A data.frame with the input features
-#' @param output A vector with class labels
+#' @param output The name of the response column containing labels -1 and 1.
 #'
 #' @importFrom stats runif
 #'
@@ -497,8 +497,8 @@ select_best_offspring <- function(child1, child2) {
 #'
 #' @param population population class object
 #' @param data A data.frame with the input features
-#' @param inputs A vector of input features
-#' @param output A vector with class labels
+#' @param inputs A character vector containing predictor column names.
+#' @param output The name of the response column containing labels -1 and 1.
 #'
 #' @importFrom stats runif
 #'
@@ -576,8 +576,8 @@ new_population <- function(population, data, inputs, output) {
 #' @param solution solution object to mutate
 #' @param population population class object that contains mutation parameters
 #' @param data A data.frame with the input features
-#' @param inputs A vector of input features
-#' @param output A vector with class labels
+#' @param inputs A character vector containing predictor column names.
+#' @param output The name of the response column containing labels -1 and 1.
 #'
 #' @importFrom stats runif
 #'
