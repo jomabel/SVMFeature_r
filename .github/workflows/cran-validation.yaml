@@ -1,8 +1,9 @@
 name: CRAN validation after public access
 'on':
   push:
-    branches: codex/cran-validation-20261107-*
-  workflow_dispatch: ~
+    branches:
+      - 'codex/cran-validation-20261107-*'
+  workflow_dispatch:
 permissions:
   contents: read
 jobs:
@@ -15,134 +16,125 @@ jobs:
     env:
       GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
     steps:
-    - uses: actions/checkout@v4
-    - uses: r-lib/actions/setup-r@v2
-      with:
-        r-version: release
-        use-public-rspm: yes
-    - name: Extract source snapshot
-      shell: Rscript {0}
-      run: |
-        archive <- '.github/validation/svmfsmeta_0.1.0.tar.gz'
-        stopifnot(unname(tools::md5sum(archive)) == 'bff8b13764318a498a7c8c3959c512fe')
-        dir.create('package')
-        utils::untar(archive, exdir = 'package')
-    - uses: r-lib/actions/setup-r-dependencies@v2
-      with:
-        working-directory: package/svmfsmeta
-        needs: check
-        install-pandoc: yes
-    - name: Build final source archive
-      id: build
-      shell: Rscript {0}
-      run: |
-        stopifnot(system2(file.path(R.home('bin'), 'R'), c('CMD', 'build', 'package/svmfsmeta')) == 0L)
-        archive <- 'svmfsmeta_0.1.0.tar.gz'
-        cat(paste0('md5=', unname(tools::md5sum(archive)), '\n'),
-            file = Sys.getenv('GITHUB_OUTPUT'), append = TRUE)
-        capture.output(sessionInfo(), file = 'build-session-info.txt')
-    - uses: actions/upload-artifact@v4
-      with:
-        name: source-svmfsmeta-0.1.0
-        path: |
-          svmfsmeta_0.1.0.tar.gz
-          build-session-info.txt
-        retention-days: 7
+      - uses: actions/checkout@v4
+      - uses: r-lib/actions/setup-r@v2
+        with:
+          r-version: release
+          use-public-rspm: true
+      - name: Extract source snapshot
+        shell: Rscript {0}
+        run: |
+          archive <- '.github/validation/svmfsmeta_0.1.0.tar.gz'
+          stopifnot(unname(tools::md5sum(archive)) == 'bff8b13764318a498a7c8c3959c512fe')
+          dir.create('package')
+          utils::untar(archive, exdir = 'package')
+      - uses: r-lib/actions/setup-r-dependencies@v2
+        with:
+          working-directory: package/svmfsmeta
+          needs: check
+          install-pandoc: true
+      - name: Build final source archive
+        id: build
+        shell: Rscript {0}
+        run: |
+          stopifnot(system2(file.path(R.home('bin'), 'R'), c('CMD', 'build', 'package/svmfsmeta')) == 0L)
+          archive <- 'svmfsmeta_0.1.0.tar.gz'
+          cat(paste0('md5=', unname(tools::md5sum(archive)), '\n'),
+              file = Sys.getenv('GITHUB_OUTPUT'), append = TRUE)
+          capture.output(sessionInfo(), file = 'build-session-info.txt')
+      - uses: actions/upload-artifact@v4
+        with:
+          name: source-svmfsmeta-0.1.0
+          path: |
+            svmfsmeta_0.1.0.tar.gz
+            build-session-info.txt
+          retention-days: 7
   current-r:
-    name: ${{ matrix.config.id }}
+    name: '${{ matrix.config.id }}'
     needs: build_source
     runs-on: ${{ matrix.config.os }}
     timeout-minutes: 45
     strategy:
-      fail-fast: no
+      fail-fast: false
       matrix:
         config:
-        - id: linux-release
-          os: ubuntu-24.04
-          r: release
-        - id: linux-devel
-          os: ubuntu-24.04
-          r: devel
-        - id: windows-release
-          os: windows-latest
-          r: release
-        - id: windows-devel
-          os: windows-latest
-          r: devel
+          - {id: linux-release, os: ubuntu-24.04, r: release}
+          - {id: linux-devel, os: ubuntu-24.04, r: devel}
+          - {id: windows-release, os: windows-latest, r: release}
+          - {id: windows-devel, os: windows-latest, r: devel}
     env:
       GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
-      R_KEEP_PKG_SOURCE: 'yes'
+      R_KEEP_PKG_SOURCE: yes
     steps:
-    - name: Install HTML validator
-      if: runner.os == 'Linux'
-      run: |
-        sudo apt-get update
-        sudo apt-get install -y --no-install-recommends tidy
-    - uses: actions/download-artifact@v4
-      with:
-        name: source-svmfsmeta-0.1.0
-        path: source
-    - uses: r-lib/actions/setup-r@v2
-      with:
-        r-version: ${{ matrix.config.r }}
-        use-public-rspm: yes
-    - uses: r-lib/actions/setup-tinytex@v2
-    - name: Extract dependency metadata
-      shell: Rscript {0}
-      run: |
-        archive <- 'source/svmfsmeta_0.1.0.tar.gz'
-        stopifnot(unname(tools::md5sum(archive)) == '${{ needs.build_source.outputs.md5 }}')
-        dir.create('package')
-        utils::untar(archive, exdir = 'package')
-    - uses: r-lib/actions/setup-r-dependencies@v2
-      with:
-        working-directory: package/svmfsmeta
-        extra-packages: |
-          any::rcmdcheck
-          any::V8
-        needs: check
-        install-pandoc: yes
-    - name: Prepare manual toolchain
-      shell: Rscript {0}
-      run: |
-        tinytex::tlmgr_install(c('courier', 'times', 'helvetic', 'inconsolata', 'nameref', 'makeindex'))
-        font <- system2('kpsewhich', 'pcrr8t.tfm', stdout = TRUE)
-        stopifnot(length(font) > 0L, file.exists(font[1L]))
-        link_style <- system2('kpsewhich', 'nameref.sty', stdout = TRUE)
-        stopifnot(length(link_style) > 0L, file.exists(link_style[1L]))
-        stopifnot(nzchar(Sys.which('makeindex')))
-        writeLines('\\indexentry{check}{1}', 'index-preflight.idx')
-        index_status <- system2('makeindex', 'index-preflight.idx')
-        stopifnot(index_status == 0L, file.exists('index-preflight.ind'))
-    - name: Check exact source archive
-      shell: Rscript {0}
-      run: |
-        Sys.unsetenv('NOT_CRAN')
-        result <- rcmdcheck::rcmdcheck(
-          path = 'source/svmfsmeta_0.1.0.tar.gz',
-          args = '--as-cran', check_dir = 'check',
-          error_on = 'never', timeout = 1800
-        )
-        saveRDS(result, 'check/result.rds')
-        capture.output(sessionInfo(), file = 'check/session-info.txt')
-        jsonlite::write_json(list(r = as.character(getRversion()),
-          platform = R.version$platform, errors = result$errors,
-          warnings = result$warnings, notes = result$notes),
-          'check/status.json', auto_unbox = TRUE, pretty = TRUE)
-        if (length(result$errors) || length(result$warnings)) {
-          stop('Package check has errors or warnings.')
-        }
-
-        raw_log <- readLines("check/svmfsmeta.Rcheck/00check.log", warn = FALSE)
-        raw_status <- tail(grep("^Status:", raw_log, value = TRUE), 1L)
-        stopifnot(length(raw_status) == 1L)
-        if (grepl("[1-9][0-9]* (ERROR|WARNING)", raw_status)) stop(raw_status)
-    - uses: actions/upload-artifact@v4
-      if: always()
-      with:
-        name: check-${{ matrix.config.id }}
-        path: check
-        retention-days: 7
+      - name: Install HTML validator
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends tidy
+      - uses: actions/download-artifact@v4
+        with:
+          name: source-svmfsmeta-0.1.0
+          path: source
+      - uses: r-lib/actions/setup-r@v2
+        with:
+          r-version: ${{ matrix.config.r }}
+          use-public-rspm: true
+      - uses: r-lib/actions/setup-tinytex@v2
+      - name: Extract dependency metadata
+        shell: Rscript {0}
+        run: |
+          archive <- 'source/svmfsmeta_0.1.0.tar.gz'
+          stopifnot(unname(tools::md5sum(archive)) == '${{ needs.build_source.outputs.md5 }}')
+          dir.create('package')
+          utils::untar(archive, exdir = 'package')
+      - uses: r-lib/actions/setup-r-dependencies@v2
+        with:
+          working-directory: package/svmfsmeta
+          extra-packages: |
+            any::rcmdcheck
+            any::V8
+          needs: check
+          install-pandoc: true
+      - name: Prepare manual toolchain
+        shell: Rscript {0}
+        run: |
+          tinytex::tlmgr_install(c('courier', 'times', 'helvetic', 'inconsolata', 'nameref', 'makeindex'))
+          font <- system2('kpsewhich', 'pcrr8t.tfm', stdout = TRUE)
+          stopifnot(length(font) > 0L, file.exists(font[1L]))
+          link_style <- system2('kpsewhich', 'nameref.sty', stdout = TRUE)
+          stopifnot(length(link_style) > 0L, file.exists(link_style[1L]))
+          stopifnot(nzchar(Sys.which('makeindex')))
+          writeLines('\\indexentry{check}{1}', 'index-preflight.idx')
+          index_status <- system2('makeindex', 'index-preflight.idx')
+          stopifnot(index_status == 0L, file.exists('index-preflight.ind'))
+      - name: Check exact source archive
+        shell: Rscript {0}
+        run: |
+          Sys.unsetenv('NOT_CRAN')
+          result <- rcmdcheck::rcmdcheck(
+            path = 'source/svmfsmeta_0.1.0.tar.gz',
+            args = '--as-cran', check_dir = 'check',
+            error_on = 'never', timeout = 1800
+          )
+          raw_log <- readLines("check/svmfsmeta.Rcheck/00check.log", warn = FALSE)
+          raw_status <- tail(grep("^Status:", raw_log, value = TRUE), 1L)
+          stopifnot(length(raw_status) == 1L)
+          if (grepl("[1-9][0-9]* (ERROR|WARNING)", raw_status)) stop(raw_status)
+          saveRDS(result, 'check/result.rds')
+          capture.output(sessionInfo(), file = 'check/session-info.txt')
+          jsonlite::write_json(list(r = as.character(getRversion()),
+            platform = R.version$platform, errors = result$errors,
+            warnings = result$warnings, notes = result$notes),
+            'check/status.json', auto_unbox = TRUE, pretty = TRUE)
+          if (length(result$errors) || length(result$warnings)) {
+            stop('Package check has errors or warnings.')
+          }
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: check-${{ matrix.config.id }}
+          path: check
+          retention-days: 7
   minimum-r:
     name: linux-r-4.1.3
     needs: build_source
@@ -154,65 +146,64 @@ jobs:
         shell: bash
     env:
       GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
-      R_KEEP_PKG_SOURCE: 'yes'
+      R_KEEP_PKG_SOURCE: yes
     steps:
-    - name: Install system libraries
-      run: |
-        apt-get update
-        apt-get install -y --no-install-recommends git curl ca-certificates qpdf gfortran libcurl4-openssl-dev libssl-dev libxml2-dev
-    - uses: actions/download-artifact@v4
-      with:
-        name: source-svmfsmeta-0.1.0
-        path: source
-    - uses: r-lib/actions/setup-r@v2
-      with:
-        r-version: 4.1.3
-        install-r: no
-        use-public-rspm: no
-        cran: https://cloud.r-project.org
-    - uses: r-lib/actions/setup-pandoc@v2
-      with:
-        pandoc-version: 3.1.13
-    - name: Extract dependency metadata
-      shell: Rscript {0}
-      run: |
-        archive <- 'source/svmfsmeta_0.1.0.tar.gz'
-        stopifnot(unname(tools::md5sum(archive)) == '${{ needs.build_source.outputs.md5 }}')
-        dir.create('package')
-        utils::untar(archive, exdir = 'package')
-    - uses: r-lib/actions/setup-r-dependencies@v2
-      with:
-        working-directory: package/svmfsmeta
-        extra-packages: any::rcmdcheck
-        needs: check
-        install-pandoc: no
-    - name: Check exact source archive
-      shell: Rscript {0}
-      run: |
-        Sys.unsetenv('NOT_CRAN')
-        stopifnot(getRversion() == '4.1.3')
-        result <- rcmdcheck::rcmdcheck(
-          path = 'source/svmfsmeta_0.1.0.tar.gz',
-          args = c('--as-cran', '--no-manual'), check_dir = 'check',
-          error_on = 'never', timeout = 1800
-        )
-        saveRDS(result, 'check/result.rds')
-        capture.output(sessionInfo(), file = 'check/session-info.txt')
-        jsonlite::write_json(list(r = as.character(getRversion()),
-          platform = R.version$platform, errors = result$errors,
-          warnings = result$warnings, notes = result$notes),
-          'check/status.json', auto_unbox = TRUE, pretty = TRUE)
-        if (length(result$errors) || length(result$warnings)) {
-          stop('Package check has errors or warnings.')
-        }
-
-        raw_log <- readLines("check/svmfsmeta.Rcheck/00check.log", warn = FALSE)
-        raw_status <- tail(grep("^Status:", raw_log, value = TRUE), 1L)
-        stopifnot(length(raw_status) == 1L)
-        if (grepl("[1-9][0-9]* (ERROR|WARNING)", raw_status)) stop(raw_status)
-    - uses: actions/upload-artifact@v4
-      if: always()
-      with:
-        name: check-linux-r-4.1.3
-        path: check
-        retention-days: 7
+      - name: Install system libraries
+        run: |
+          apt-get update
+          apt-get install -y --no-install-recommends git curl ca-certificates qpdf gfortran libcurl4-openssl-dev libssl-dev libxml2-dev
+      - uses: actions/download-artifact@v4
+        with:
+          name: source-svmfsmeta-0.1.0
+          path: source
+      - uses: r-lib/actions/setup-r@v2
+        with:
+          r-version: '4.1.3'
+          install-r: false
+          use-public-rspm: false
+          cran: https://cloud.r-project.org
+      - uses: r-lib/actions/setup-pandoc@v2
+        with:
+          pandoc-version: '3.1.13'
+      - name: Extract dependency metadata
+        shell: Rscript {0}
+        run: |
+          archive <- 'source/svmfsmeta_0.1.0.tar.gz'
+          stopifnot(unname(tools::md5sum(archive)) == '${{ needs.build_source.outputs.md5 }}')
+          dir.create('package')
+          utils::untar(archive, exdir = 'package')
+      - uses: r-lib/actions/setup-r-dependencies@v2
+        with:
+          working-directory: package/svmfsmeta
+          extra-packages: any::rcmdcheck
+          needs: check
+          install-pandoc: false
+      - name: Check exact source archive
+        shell: Rscript {0}
+        run: |
+          Sys.unsetenv('NOT_CRAN')
+          stopifnot(getRversion() == '4.1.3')
+          result <- rcmdcheck::rcmdcheck(
+            path = 'source/svmfsmeta_0.1.0.tar.gz',
+            args = c('--as-cran', '--no-manual'), check_dir = 'check',
+            error_on = 'never', timeout = 1800
+          )
+          raw_log <- readLines("check/svmfsmeta.Rcheck/00check.log", warn = FALSE)
+          raw_status <- tail(grep("^Status:", raw_log, value = TRUE), 1L)
+          stopifnot(length(raw_status) == 1L)
+          if (grepl("[1-9][0-9]* (ERROR|WARNING)", raw_status)) stop(raw_status)
+          saveRDS(result, 'check/result.rds')
+          capture.output(sessionInfo(), file = 'check/session-info.txt')
+          jsonlite::write_json(list(r = as.character(getRversion()),
+            platform = R.version$platform, errors = result$errors,
+            warnings = result$warnings, notes = result$notes),
+            'check/status.json', auto_unbox = TRUE, pretty = TRUE)
+          if (length(result$errors) || length(result$warnings)) {
+            stop('Package check has errors or warnings.')
+          }
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: check-linux-r-4.1.3
+          path: check
+          retention-days: 7
