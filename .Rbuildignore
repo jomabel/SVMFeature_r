@@ -9,3 +9,4 @@
 ^data-raw$
 ^main\.R$
 (^|/)Rplots\.pdf$
+^results$
