@@ -124,6 +124,12 @@ selected[c("accuracy", "precision", "recall", "f1", "kappa", "auc", "conf_matrix
 
 Here the first front candidate is inspected. Candidate selection depends on the desired objective trade-off. The reported metrics describe the data used for optimization.
 
+`DOMINATES_TO` and `DOMINATED_BY` contain `SOL` identifiers from the full
+population. They are not row positions in the summary table or Pareto-only CSV.
+After selection and renumbering, `fnds()` rebuilds these relationships; the
+optimizer does this automatically. Internal `fronts` membership uses one-based
+positions in `solution_list`.
+
 ### `draw_solution(x)`
 Generates a `ggplot2` scatter plot of the Pareto front (Front 1).
 

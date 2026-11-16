@@ -18,6 +18,9 @@ This function performs the Fast Non-Dominated Sorting on a given population.
 \details{
 An empty population has no fronts. A population containing one candidate
 places that candidate in the first front.
+Solution dominance lists contain solution identifiers (\code{num}, exported
+as \code{SOL}), not positions in \code{solution_list}. Front membership
+in \code{fronts} continues to use one-based positions for internal indexing.
 }
 \examples{
 set.seed(42)

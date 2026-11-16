@@ -221,6 +221,9 @@ check_clones <- function(population, solution_eva) {
 #' @details
 #'   An empty population has no fronts. A population containing one candidate
 #'   places that candidate in the first front.
+#'   Solution dominance lists contain solution identifiers (\code{num}, exported
+#'   as \code{SOL}), not positions in \code{solution_list}. Front membership
+#'   in \code{fronts} continues to use one-based positions for internal indexing.
 #'
 #' @param population population class object
 #'
@@ -298,6 +301,17 @@ fnds <- function(population) {
     fronts[[r]] <- front
   }
 
+  # Sorting above uses positions. Publish relationships using the same IDs
+  # as SOL, including when IDs are zero-based or nonconsecutive.
+  solution_ids <- lapply(population$solution_list, function(sol) sol$num)
+  for (i in seq_len(pop_size)) {
+    sol <- population$solution_list[[i]]
+    sol$dominates_list <- unname(solution_ids[unlist(sol$dominates_list,
+                                                   use.names = FALSE)])
+    sol$list_dominated_by <- unname(solution_ids[unlist(sol$list_dominated_by,
+                                                      use.names = FALSE)])
+    population$solution_list[[i]] <- sol
+  }
   population$fronts <- fronts
   return(population)
 }
@@ -652,8 +666,9 @@ mutate_solution <- function(solution, population, data, inputs, output) {
 #'
 #' @details
 #'   The returned population retains the input population's optimization settings.
-#'   Its fronts and cached solution summaries are cleared for recalculation
-#'   after selection.
+#'   Its fronts, solution dominance relationships, and cached solution summaries
+#'   are cleared after selection and renumbering. Call \code{fnds()} to rebuild
+#'   relationships using the retained solutions' new identifiers.
 #'   If its size is already at or below the target, all candidates are retained.
 #'   Larger populations must have complete fronts from \code{fnds()}.
 #'
@@ -695,6 +710,10 @@ reduce_population <- function(population) {
     new_population$solution_list <- population$solution_list
     for (i in seq_along(new_population$solution_list)) {
       new_population$solution_list[[i]]$num <- i - 1L
+      new_population$solution_list[[i]]$dominates_list <- list()
+      new_population$solution_list[[i]]$list_dominated_by <- list()
+      new_population$solution_list[[i]]$sol_dom_by <- 0
+      new_population$solution_list[[i]]$front <- -1
     }
     return(new_population)
   }
@@ -737,6 +756,10 @@ reduce_population <- function(population) {
   # Rename the solutions
   for (i in seq_along(new_population$solution_list)) {
     new_population$solution_list[[i]]$num <- i - 1
+    new_population$solution_list[[i]]$dominates_list <- list()
+    new_population$solution_list[[i]]$list_dominated_by <- list()
+    new_population$solution_list[[i]]$sol_dom_by <- 0
+    new_population$solution_list[[i]]$front <- -1
   }
   return(new_population)
 }

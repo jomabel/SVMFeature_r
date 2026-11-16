@@ -17,9 +17,11 @@ Method to convert the solution to a dictionary
 }
 \details{
 For an evaluated solution, the historical fields \code{MCPOS} and
-  \code{MCNEG} contain false-negative and false-positive counts,
-  respectively. Class 1 is positive, and both counts use predictions from
-  the intermediate classifier plane.
+\code{MCNEG} contain false-negative and false-positive counts,
+respectively. Class 1 is positive, and both counts use predictions from
+the intermediate classifier plane.
+\code{DOMINATES_TO} and \code{DOMINATED_BY} contain \code{SOL} identifiers
+from the full current population, not row positions in a summary or CSV.
 }
 \examples{
 sol <- solution(num = 1, num_features = 2, obj = "DIST-EPS")

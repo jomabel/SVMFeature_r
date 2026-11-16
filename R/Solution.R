@@ -48,6 +48,8 @@ solution <- function(num, num_features, obj) {
 #'   \code{MCNEG} contain false-negative and false-positive counts,
 #'   respectively. Class 1 is positive, and both counts use predictions from
 #'   the intermediate classifier plane.
+#'   \code{DOMINATES_TO} and \code{DOMINATED_BY} contain \code{SOL} identifiers
+#'   from the full current population, not row positions in a summary or CSV.
 #'
 #' @param solution solution class object
 #'

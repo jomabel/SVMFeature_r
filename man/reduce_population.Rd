@@ -17,8 +17,9 @@ This function reduces the population size based on fronts and crowding distance.
 }
 \details{
 The returned population retains the input population's optimization settings.
-Its fronts and cached solution summaries are cleared for recalculation
-after selection.
+Its fronts, solution dominance relationships, and cached solution summaries
+are cleared after selection and renumbering. Call \code{fnds()} to rebuild
+relationships using the retained solutions' new identifiers.
 If its size is already at or below the target, all candidates are retained.
 Larger populations must have complete fronts from \code{fnds()}.
 }
