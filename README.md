@@ -132,6 +132,57 @@ positions in `solution_list`.
 After sorting, `SOL_DOM_BY` equals the number of identifiers in `DOMINATED_BY`;
 the sorting algorithm uses a separate working counter.
 
+### `predict(solution, newdata, type = "class")`
+
+Solutions have S3 class `solution`. Use `predict()` on an evaluated solution
+to classify one or more observations without their true labels:
+
+```r
+new_observations <- test[selected$features]  # Already scaled using training parameters
+predict(selected, newdata = new_observations, type = "class")
+predict(selected, newdata = new_observations, type = "score")
+predict(selected, newdata = new_observations[1, , drop = FALSE])
+```
+
+Predictor columns are matched by name; extra columns are ignored. The returned
+vector keeps row order and uses row names as observation names. Scores are
+oriented toward class `1`; a score of zero predicts `1`. Scores are not
+probabilities. Reuse preprocessing fitted on training data; `predict()` does
+not fit or apply normalization. For evaluated lists saved before S3 support,
+assign `class(selected) <- "solution"` before calling `predict()`.
+
+### `evaluate_test(solution, data, output)`
+
+Evaluates a previously trained solution on held-out data using its stored
+classifier. Returns a separate list with `error_rate`, `n_errors`, `n_samples`,
+FN/FP (`fn`, `fp`), accuracy, precision, recall, F1, kappa, AUC,
+`confusion_matrix`, `predictions` and `decision_scores`.
+The function obtains its decision scores through `predict()`.
+The training metrics, objectives and Pareto ranks are unchanged. Class `1` is
+positive, including scores of zero. AUC is `NA` for a single true class.
+Undefined precision and recall follow the training convention (`NA`/`NaN`).
+
+Split the raw data first, learn normalization only on training, and reuse that
+transformation on test. For example, after selecting a trained solution:
+
+```r
+test_metrics <- evaluate_test(selected, test, output = "y")
+test_metrics$error_rate  # (FN + FP) / number of test observations
+test_metrics$confusion_matrix
+```
+
+The installed package includes a complete stratified Colon example (41 training
+and 21 test observations), with training-only normalization and all training/test
+classification metrics for the MC Pareto front:
+
+```r
+# install.packages("plsgenomics")
+source(system.file("examples", "colon_train_test.R", package = "svmfsmeta"))
+```
+
+Keep the final test set independent of model selection. If held-out performance
+is used to choose a classifier, use a validation set and a separate final test.
+
 ### `draw_solution(x)`
 Generates a `ggplot2` scatter plot of the Pareto front (Front 1).
 

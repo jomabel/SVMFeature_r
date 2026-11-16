@@ -1,6 +1,11 @@
 # svmfsmeta 0.1.0
 
 * Initial release.
+* Solutions are S3 objects with a `predict()` method for class labels or decision
+  scores on unlabeled data. `evaluate_test()` reuses this prediction method.
+* Adds `evaluate_test()` for held-out classification metrics using fixed
+  classifiers, without changing training results or Pareto ranks. Includes
+  a stratified Colon training/test example with training-only normalization.
 * Dominance references use the same identifiers as `SOL`. Survivor selection
   clears obsolete references before sorting rebuilds them with the new IDs.
 * Preserves actual dominator counts in `SOL_DOM_BY` by using a separate counter

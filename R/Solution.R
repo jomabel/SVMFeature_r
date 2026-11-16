@@ -7,7 +7,8 @@
 #' @param num_features Number of features
 #' @param obj Objective
 #'
-#' @return Object of the `solution` class
+#' @return An S3 object of class \code{solution}, stored as a list. Evaluated
+#'   solutions support \code{predict()} for new observations.
 #'
 #' @export
 #'
@@ -33,6 +34,7 @@ solution <- function(num, num_features, obj) {
     crowding_distance = 0
   )
 
+  class(solution) <- "solution"
   return(solution)
 }
 
