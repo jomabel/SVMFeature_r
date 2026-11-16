@@ -3,6 +3,8 @@
 * Initial release.
 * Dominance references use the same identifiers as `SOL`. Survivor selection
   clears obsolete references before sorting rebuilds them with the new IDs.
+* Preserves actual dominator counts in `SOL_DOM_BY` by using a separate counter
+  during non-dominated sorting.
 * Provides NSGA-II-based Pareto-front approximation for binary soft-margin SVM
   classification with a fixed number of selected predictors and two alternative
   pairs of objectives.

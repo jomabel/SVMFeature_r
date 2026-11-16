@@ -12,10 +12,12 @@ test_that("dominance references use SOL identifiers rather than positions", {
   for (mode in c("DIST-EPS", "MC")) {
     pop <- reference_population(mode)
     expect_equal(vapply(pop$solution_list, function(s) s$front, numeric(1)), 1:3)
+    expect_equal(vapply(pop$solution_list, function(s) s$sol_dom_by, numeric(1)), 0:2)
     expect_equal(pop$fronts[[1]]$solutions, 1)
     expect_equal(pop$fronts[[2]]$solutions, 2)
     expect_equal(pop$fronts[[3]]$solutions, 3)
     records <- lapply(pop$solution_list, to_dict)
+    expect_equal(vapply(records, function(s) s$SOL_DOM_BY, numeric(1)), 0:2)
     expect_equal(records[[1]]$SOL, 40)
     expect_equal(unlist(records[[1]]$DOMINATES_TO), c(0, 9))
     expect_identical(records[[1]]$DOMINATED_BY, list())
@@ -30,6 +32,7 @@ test_that("dominance references use SOL identifiers rather than positions", {
     reordered$solution_list <- reordered$solution_list[c(3, 1, 2)]
     reordered <- fnds(reordered)
     expect_equal(vapply(reordered$solution_list, function(s) s$front, numeric(1)), c(3, 1, 2))
+    expect_equal(vapply(reordered$solution_list, function(s) s$sol_dom_by, numeric(1)), c(2, 0, 1))
     expect_equal(unlist(reordered$solution_list[[1]]$list_dominated_by), c(40, 0))
     expect_equal(unlist(reordered$solution_list[[2]]$dominates_list), c(9, 0))
     expect_equal(unlist(reordered$solution_list[[3]]$dominates_list), 9)
@@ -56,6 +59,8 @@ test_that("survivor renumbering clears obsolete references before rebuilding", {
       expect_equal(unlist(rebuilt$solution_list[[2]]$list_dominated_by), 0)
       expect_equal(vapply(rebuilt$solution_list, function(s) s$front, numeric(1)),
                    seq_along(rebuilt$solution_list))
+      expect_equal(vapply(rebuilt$solution_list, function(s) s$sol_dom_by, numeric(1)),
+                   seq_along(rebuilt$solution_list) - 1)
     }
   }
 })
@@ -77,6 +82,7 @@ test_that("optimized summaries and CSVs reference current population IDs", {
       expected <- vapply(Filter(function(other) dominate(other, sol), solutions),
                          function(other) other$num, numeric(1))
       expect_setequal(as.numeric(unlist(sol$list_dominated_by)), expected)
+      expect_equal(sol$sol_dom_by, length(expected))
     }
     output <- save_results(result, tempdir(), "reference-test")
     exported <- utils::read.csv(output, colClasses = "character", na.strings = character())
@@ -84,6 +90,7 @@ test_that("optimized summaries and CSVs reference current population IDs", {
       sol <- Filter(function(s) s$num == as.numeric(exported$SOL[i]), solutions)[[1]]
       expect_identical(exported$DOMINATES_TO[i], paste(unlist(sol$dominates_list), collapse = ","))
       expect_identical(exported$DOMINATED_BY[i], paste(unlist(sol$list_dominated_by), collapse = ","))
+      expect_equal(as.numeric(exported$SOL_DOM_BY[i]), length(sol$list_dominated_by))
     }
   }
 })

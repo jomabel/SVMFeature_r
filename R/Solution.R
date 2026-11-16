@@ -50,6 +50,8 @@ solution <- function(num, num_features, obj) {
 #'   the intermediate classifier plane.
 #'   \code{DOMINATES_TO} and \code{DOMINATED_BY} contain \code{SOL} identifiers
 #'   from the full current population, not row positions in a summary or CSV.
+#'   After non-dominated sorting, \code{SOL_DOM_BY} is the number of identifiers
+#'   in \code{DOMINATED_BY}.
 #'
 #' @param solution solution class object
 #'

@@ -224,6 +224,8 @@ check_clones <- function(population, solution_eva) {
 #'   Solution dominance lists contain solution identifiers (\code{num}, exported
 #'   as \code{SOL}), not positions in \code{solution_list}. Front membership
 #'   in \code{fronts} continues to use one-based positions for internal indexing.
+#'   \code{sol_dom_by} (exported as \code{SOL_DOM_BY}) retains the number of
+#'   dominators and equals the length of \code{list_dominated_by}.
 #'
 #' @param population population class object
 #'
@@ -273,6 +275,10 @@ fnds <- function(population) {
     }
   }
 
+  # Preserve the true counts; only this working copy is consumed by sorting.
+  remaining_dominators <- vapply(population$solution_list,
+                                function(sol) sol$sol_dom_by, numeric(1))
+
   # Assign front 1 to non-dominated solutions
   for (i in seq_len(pop_size)) {
     if (population$solution_list[[i]]$sol_dom_by == 0) {
@@ -289,8 +295,8 @@ fnds <- function(population) {
     for (sol_num in fronts[[r]]$solutions) {
       dominated <- population$solution_list[[sol_num]]$dominates_list
       for (i in dominated) {
-        population$solution_list[[i]]$sol_dom_by <- population$solution_list[[i]]$sol_dom_by - 1
-        if (population$solution_list[[i]]$sol_dom_by == 0) {
+        remaining_dominators[[i]] <- remaining_dominators[[i]] - 1
+        if (remaining_dominators[[i]] == 0) {
           new_front <- c(new_front, i)
           population$solution_list[[i]]$front <- r + 1
         }

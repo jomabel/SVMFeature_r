@@ -22,6 +22,8 @@ respectively. Class 1 is positive, and both counts use predictions from
 the intermediate classifier plane.
 \code{DOMINATES_TO} and \code{DOMINATED_BY} contain \code{SOL} identifiers
 from the full current population, not row positions in a summary or CSV.
+After non-dominated sorting, \code{SOL_DOM_BY} is the number of identifiers
+in \code{DOMINATED_BY}.
 }
 \examples{
 sol <- solution(num = 1, num_features = 2, obj = "DIST-EPS")

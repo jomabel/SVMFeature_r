@@ -21,6 +21,8 @@ places that candidate in the first front.
 Solution dominance lists contain solution identifiers (\code{num}, exported
 as \code{SOL}), not positions in \code{solution_list}. Front membership
 in \code{fronts} continues to use one-based positions for internal indexing.
+\code{sol_dom_by} (exported as \code{SOL_DOM_BY}) retains the number of
+dominators and equals the length of \code{list_dominated_by}.
 }
 \examples{
 set.seed(42)

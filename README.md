@@ -129,6 +129,8 @@ population. They are not row positions in the summary table or Pareto-only CSV.
 After selection and renumbering, `fnds()` rebuilds these relationships; the
 optimizer does this automatically. Internal `fronts` membership uses one-based
 positions in `solution_list`.
+After sorting, `SOL_DOM_BY` equals the number of identifiers in `DOMINATED_BY`;
+the sorting algorithm uses a separate working counter.
 
 ### `draw_solution(x)`
 Generates a `ggplot2` scatter plot of the Pareto front (Front 1).
