@@ -4,13 +4,19 @@ The package implements multiobjective SVM feature selection using NSGA-II,
 with classification metrics, prediction, held-out evaluation, visualization,
 and CSV export.
 
-Test environment:
-- Check date: 2026-11-16
-- Windows 11 x64 (build 26200)
-- R 4.6.2 (2026-10-29 ucrt), x86_64-w64-mingw32
-- R-devel: R 4.7.0 Under development (2026-11-15 r90902 ucrt),
-  x86_64-w64-mingw32
-- Separate package libraries installed from CRAN for each R version.
+Current source validation:
+- Check date: 2026-11-18
+- Source commit: b4a7aabc04d9e337a3772a54dd801b642a325b1f
+- Branch: codex/linux-cran-check
+- Workflow: https://github.com/jomabel/SVMFeature_r/actions/runs/44288234919
+- Source archive: svmfsmeta_0.1.0.tar.gz
+- SHA256: 0b41012dcfe7fb971639e266640894918b93db22484caddda316a50749846717
+
+Linux test environments:
+- Ubuntu 26.04.1 LTS, x86_64-pc-linux-gnu
+- R 4.6.2 (2026-10-29)
+- R-devel: R 4.7.0 Under development (2026-11-17 r90926)
+- Separate GitHub Actions jobs and package libraries for each R version.
 
 Check command:
 R CMD check --as-cran svmfsmeta_0.1.0.tar.gz
@@ -27,12 +33,18 @@ The only NOTE in both checks is the initial submission:
 
 This corresponds to the first CRAN submission of the package.
 
-Examples, unit tests (1,303 passing expectations, with no failures, warnings,
+Examples, unit tests (1,307 passing expectations, with no failures, warnings,
 or skips in each R version), and vignette checks and rebuilding completed
 successfully. Both the PDF reference manual and the HTML manual, including
 mathematical rendering, were checked successfully.
 
-Checks were run on Windows only. Linux validation remains pending because
-no Linux environment was available for this run.
+The source archive and complete Linux check results are available as workflow
+artifacts. Local copies are stored under results/cran/linux/44288234919/.
+
+Previous Windows validation:
+Checks on Windows 11 with R 4.6.2 and R-devel were recorded on 2026-11-16
+for an earlier source archive. They predate the prediction API and documentation
+changes, and are not results for the source archive identified above. Validation
+of this exact final archive on Windows remains pending.
 
 NEWS.md contains a summary of the changes and features for version 0.1.0.
