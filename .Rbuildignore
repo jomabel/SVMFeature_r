@@ -1,11 +1,11 @@
 ^.*\.Rproj$
 ^\.Rproj\.user$
 ^CRAN-SUBMISSION$
-^\\.git$
+^\.git$
 ^LICENSE\.md$
 ^doc$
 ^Meta$
-^\\.gitignore$
+^\.gitignore$
 ^data-raw$
 ^main\.R$
 (^|/)Rplots\.pdf$
