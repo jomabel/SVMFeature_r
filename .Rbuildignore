@@ -10,3 +10,4 @@
 ^main\.R$
 (^|/)Rplots\.pdf$
 ^results$
+^\.github$

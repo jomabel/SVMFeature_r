@@ -13,6 +13,7 @@ The optimizer returns an object containing the final population of candidate cla
   - `DIST-EPS`: maximize the distance between margin planes and minimize the sum of margin-violation distances (epsilon).
   - `MC`: minimize false negatives (FN) and false positives (FP) separately.
 - 🔍 **Visualization**: Built-in `draw_solution()` to inspect the Pareto front.
+- **Prediction and evaluation**: Classify new observations with `predict_solution()` and assess held-out data with `evaluate_test()`.
 - 📤 **Data Export**: Save optimal solutions directly to CSV.
 
 Both `MC` objectives use the central classifier and the same predictions as the reported classification metrics. Class `1` is positive, and a zero decision score predicts `1`. In solution summaries and CSV exports, the historical column names `MCPOS` and `MCNEG` contain FN and FP, respectively. The confusion matrix has true classes in rows and predicted classes in columns: FN is `conf_matrix["1", "-1"]`, and FP is `conf_matrix["-1", "1"]`.
@@ -30,6 +31,8 @@ devtools::install_github("jomabel/SVMFeature_r")
 
 The library accepts data frames with numeric predictors and a binary response encoded as `-1` and `1`. This example loads `Colon` from the optional `plsgenomics` package: 62 observations and 2,000 gene-expression predictors. Install the example dependency with `install.packages("plsgenomics")` if necessary. Its original classes are recoded from `1` (normal tissue) to `1`, and from `2` (tumor tissue) to `-1`.
 
+The workflow uses a reproducible stratified split: 41 observations for training and 21 for test. Normalization parameters are learned from training only, and optimization uses only the training observations. The API examples below continue this workflow and reuse its objects.
+
 ```r
 library(svmfsmeta)
 
@@ -41,20 +44,41 @@ data("Colon", package = "plsgenomics")
 data <- data.frame(y = ifelse(Colon$Y == 2, -1, 1), Colon$X)
 names(data) <- c("y", paste0("x", seq_len(ncol(Colon$X))))
 
-# 2. Normalize input features (Min-Max scaling to [0, 1])
+# 2. Split raw observations before learning normalization parameters
 input_cols <- names(data)[-1]
-scaler <- function(x) {
-  rng <- range(x, na.rm = TRUE)
-  if (rng[1] == rng[2]) return(rep(0.5, length(x)))
-  (x - rng[1]) / (rng[2] - rng[1])
+set.seed(42)
+groups <- split(seq_len(nrow(data)), data$y)
+quotas <- lengths(groups) * ceiling(nrow(data) / 3) / nrow(data)
+test_sizes <- floor(quotas)
+remaining <- ceiling(nrow(data) / 3) - sum(test_sizes)
+if (remaining > 0) {
+  extra <- order(quotas - test_sizes, decreasing = TRUE)[seq_len(remaining)]
+  test_sizes[extra] <- test_sizes[extra] + 1
 }
-data[, input_cols] <- as.data.frame(lapply(data[, input_cols], scaler))
+test_rows <- unlist(Map(function(rows, n) rows[sample.int(length(rows), n)],
+                        groups, test_sizes), use.names = FALSE)
+train <- data[-test_rows, , drop = FALSE]
+test <- data[test_rows, , drop = FALSE]
+c(TRAIN = nrow(train), TEST = nrow(test))  # 41 and 21
 
-# 3. Initialize the optimizer
+# 3. Apply the same training Min-Max transformation to both sets
+training_min <- vapply(train[input_cols], min, numeric(1))
+training_span <- vapply(train[input_cols], max, numeric(1)) - training_min
+for (feature in input_cols) {
+  if (training_span[[feature]] == 0) {
+    train[[feature]] <- rep(0.5, nrow(train))
+    test[[feature]] <- rep(0.5, nrow(test))
+  } else {
+    train[[feature]] <- (train[[feature]] - training_min[[feature]]) / training_span[[feature]]
+    test[[feature]] <- (test[[feature]] - training_min[[feature]]) / training_span[[feature]]
+  }
+}
+
+# 4. Initialize the optimizer with training data only
 set.seed(42)
 obj <- svm_fs_meta(
-  data = data,
-  inputs = names(data)[-1],
+  data = train,
+  inputs = input_cols,
   output = "y",
   pop_size = 10,
   num_fea = 5,
@@ -63,13 +87,30 @@ obj <- svm_fs_meta(
   objective = "DIST-EPS"
 )
 
-# 4. Execute optimization
+# 5. Execute optimization
 result <- run.svm_fs_meta(obj)
 
-# 5. Visualize and save
+# 6. Inspect one candidate from the training Pareto front
+front_solutions <- Filter(
+  function(s) s$front == 1,
+  result$population$solution_list
+)
+selected <- front_solutions[[1]]
+new_observation <- test[1, selected$features, drop = FALSE]
+predict_solution(selected, newdata = new_observation, type = "class")
+predict_solution(selected, newdata = new_observation, type = "score")
+
+# 7. Evaluate this fixed classifier on the held-out observations
+test_metrics <- evaluate_test(selected, test, output = "y")
+test_metrics$error_rate
+test_metrics$confusion_matrix
+
+# 8. Visualize and save the training Pareto front
 draw_solution(result)
-save_results(result, output_dir = tempdir(), dataset_name = "colon")
+csv_file <- save_results(result, output_dir = tempdir(), dataset_name = "colon")
 ```
+
+Training predictors are scaled to `[0, 1]`, with constant training predictors mapped to `0.5` in both sets. Test values can fall outside `[0, 1]`; keep the training transformation unchanged. The first front candidate is used here to illustrate prediction. Choose a candidate according to the desired trade-off on training objectives, keeping the final test set independent of model selection.
 
 The dataset is described by [Alon et al. (1999)](https://doi.org/10.1073/pnas.96.12.6745). See `help("Colon", package = "plsgenomics")` for its source and documentation. Predictor names are assigned as `x1` to `x2000` in this example; the original gene identifiers remain available in `Colon$gene.names`.
 
@@ -83,8 +124,8 @@ Initializes the optimization object.
 
 | Parameter | Type | Default | Description |
 | :--- | :--- | :--- | :--- |
-| `data` | `data.frame` | - | The dataset containing features and target column. |
-| `inputs` | `vector` | - | Names of the input feature columns. |
+| `data` | `data.frame` | - | The training dataset containing features and target column. |
+| `inputs` | `character` | - | Names of the input feature columns. |
 | `output` | `character` | - | Name of the target (class) column. |
 | `pop_size` | `numeric` | - | Size of the population. |
 | `num_fea` | `numeric` | - | Exact number of predictors selected in every candidate; a positive integer no larger than `length(inputs)`. |
@@ -97,7 +138,6 @@ Initializes the optimization object.
 | `p_mut_ind` | `numeric` | `0.4` | Probability of mutating an individual. |
 | `p_mut_fea` | `numeric` | `0.4` | Probability of mutating a feature selection. |
 | `p_mut_coord` | `numeric` | `0.2` | Probability of mutating hyperplane coordinates. |
-
 | `mut_coord` | `numeric` | `0` | Mutation strategy on coordinates (0: Scaling, 1: Full replacement). |
 
 In time mode, the timer starts after the initial population has been generated, sorted into fronts, and summarized. The budget is checked before each iteration, and an iteration already started runs to completion. Total runtime therefore includes initialization and may exceed `max_time`; this is not a strict timeout.
@@ -161,8 +201,9 @@ The training metrics, objectives and Pareto ranks are unchanged. Class `1` is
 positive, including scores of zero. AUC is `NA` for a single true class.
 Undefined precision and recall follow the training convention (`NA`/`NaN`).
 
-Split the raw data first, learn normalization only on training, and reuse that
-transformation on test. For example, after selecting a trained solution:
+The basic example already creates `train` and `test` before learning the
+normalization parameters. After selecting a trained solution, reuse its
+unchanged classifier on that transformed test set:
 
 ```r
 test_metrics <- evaluate_test(selected, test, output = "y")
@@ -187,6 +228,19 @@ Generates a `ggplot2` scatter plot of the Pareto front (Front 1).
 
 ### `save_results(object, output_dir, dataset_name="dataset")`
 Exports the Pareto front to a CSV file.
+
+## Development checks
+
+The `R-CMD-check (Linux)` GitHub Actions workflow runs on pushes, pull requests,
+and manual requests from the repository's **Actions** tab. It builds one source
+archive and checks that same archive on Ubuntu with both the current R release
+and R-devel. Checks include the optional example dependencies, tests, examples,
+vignette rebuilding, PDF manual, and CRAN incoming checks.
+
+Each run provides a `source-package` artifact containing the checked `.tar.gz`
+and separate `linux-r-release-check` and `linux-r-devel-check` artifacts with
+the check results and logs. Review errors, warnings, and notes before using the
+source archive for a CRAN submission.
 
 ## 👥 Authors
 *   **José Manuel Martínez Belando**

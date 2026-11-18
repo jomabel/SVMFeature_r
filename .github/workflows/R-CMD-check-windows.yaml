@@ -1,0 +1,127 @@
+name: R-CMD-check (Windows archive)
+
+on:
+  push:
+    branches: [codex/windows-cran-check]
+    paths: [.github/workflows/R-CMD-check-windows.yaml]
+  workflow_dispatch:
+    inputs:
+      source_run_id:
+        description: Successful Linux run containing the source-package artifact
+        required: true
+        default: "44288234919"
+      expected_sha256:
+        description: SHA256 of the source archive to validate
+        required: true
+        default: "0b41012dcfe7fb971639e266640894918b93db22484caddda316a50749846717"
+
+permissions:
+  contents: read
+  actions: read
+
+concurrency:
+  group: windows-archive-check-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
+  R_KEEP_PKG_SOURCE: "yes"
+  _R_CHECK_FORCE_SUGGESTS_: "true"
+  _R_CHECK_CRAN_INCOMING_: "true"
+  _R_CHECK_CRAN_INCOMING_REMOTE_: "true"
+  SOURCE_RUN_ID: ${{ inputs.source_run_id || '44288234919' }}
+  EXPECTED_SOURCE_SHA256: ${{ inputs.expected_sha256 || '0b41012dcfe7fb971639e266640894918b93db22484caddda316a50749846717' }}
+
+jobs:
+  check:
+    name: Windows (R-${{ matrix.r }})
+    runs-on: windows-latest
+    timeout-minutes: 45
+    strategy:
+      fail-fast: false
+      matrix:
+        r: [release, devel]
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Download the archive checked on Linux
+        uses: actions/download-artifact@v8.0.2
+        with:
+          name: source-package
+          path: source-package
+          run-id: ${{ env.SOURCE_RUN_ID }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Verify the source archive
+        shell: pwsh
+        run: |
+          $archives = @(Get-ChildItem -LiteralPath source-package -Filter *.tar.gz -File)
+          if ($archives.Count -ne 1) { throw "Expected exactly one source archive." }
+          $expected = $env:EXPECTED_SOURCE_SHA256.ToLowerInvariant()
+          if ($expected -notmatch '^[0-9a-f]{64}$') { throw "Invalid expected SHA256." }
+          $actual = (Get-FileHash -LiteralPath $archives[0].FullName -Algorithm SHA256).Hash.ToLowerInvariant()
+          if ($actual -ne $expected) { throw "The archive differs from the one checked on Linux." }
+          Write-Output "Verified source archive SHA256: $actual"
+
+      - uses: r-lib/actions/setup-pandoc@v2
+
+      - uses: r-lib/actions/setup-r@v2
+        with:
+          r-version: ${{ matrix.r }}
+          http-user-agent: release
+          Ncpus: 2
+
+      - uses: r-lib/actions/setup-tinytex@v2
+
+      - name: Install manual fonts and index tools
+        shell: pwsh
+        timeout-minutes: 5
+        env:
+          TEXLIVE_PREFER_OWN: "1"
+        run: |
+          # Rtools' compression utilities make tlmgr extremely slow on Windows.
+          # This PATH change is local to this step; later steps retain Rtools.
+          $env:PATH = ($env:PATH -split ';' | Where-Object { $_ -notmatch '(^|[\\/])rtools[0-9]*([\\/]|$)' }) -join ';'
+          tlmgr install courier makeindex
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          kpsewhich pcrr8t.tfm
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          Get-Command makeindex -ErrorAction Stop | Select-Object -ExpandProperty Source
+
+      - name: Install HTML validation tools
+        shell: pwsh
+        run: |
+          choco install html-tidy --yes --no-progress --limit-output
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          tidy --version
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+      - uses: r-lib/actions/setup-r-dependencies@v2
+        with:
+          extra-packages: |
+            any::rcmdcheck
+            any::V8
+          needs: check
+          cache: always
+
+      - name: Check the package, tests, vignette and manuals
+        shell: Rscript {0}
+        run: |
+          archive <- list.files("source-package", pattern = "[.]tar[.]gz$", full.names = TRUE)
+          stopifnot(length(archive) == 1L)
+          stopifnot(nzchar(Sys.which("pdflatex")), nzchar(Sys.which("makeindex")),
+                    nzchar(Sys.which("tidy")), requireNamespace("V8", quietly = TRUE))
+          rcmdcheck::rcmdcheck(
+            path = archive,
+            args = "--as-cran",
+            check_dir = "check",
+            error_on = "warning"
+          )
+
+      - name: Upload check results
+        if: always()
+        uses: actions/upload-artifact@v7.0.2
+        with:
+          name: windows-r-${{ matrix.r }}-check
+          path: check
+          if-no-files-found: ignore
