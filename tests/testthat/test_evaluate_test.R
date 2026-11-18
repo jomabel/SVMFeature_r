@@ -22,8 +22,8 @@ test_that("held-out errors use the fixed plane, preserve rows and do not mutate"
   expect_equal(metrics$accuracy, 0.6)
   expect_equal(unname(metrics$predictions), c(-1, -1, 1, 1, 1))
   expect_equal(unname(metrics$decision_scores), test$x)
-  expect_identical(metrics$predictions, predict(sol, test["x"], type = "class"))
-  expect_identical(metrics$decision_scores, predict(sol, test["x"], type = "score"))
+  expect_identical(metrics$predictions, predict_solution(sol, test["x"], type = "class"))
+  expect_identical(metrics$decision_scores, predict_solution(sol, test["x"], type = "score"))
   expect_identical(names(metrics$predictions), rownames(test))
   expect_identical(names(metrics$decision_scores), rownames(test))
   expect_equal(as.vector(metrics$confusion_matrix), c(1, 1, 1, 2))
@@ -105,9 +105,9 @@ test_that("the installed Colon example evaluates each fixed Pareto solution", {
                       factor(metrics$predictions, levels = c(-1, 1)))
     expect_equal(metrics$confusion_matrix, expected)
     expect_equal(metrics$error_rate, mean(metrics$predictions != env$test$y))
-    expect_identical(metrics$predictions, predict(sol, env$test[sol$features]))
+    expect_identical(metrics$predictions, predict_solution(sol, env$test[sol$features]))
     expect_identical(metrics$decision_scores,
-                     predict(sol, env$test[sol$features], type = "score"))
+                     predict_solution(sol, env$test[sol$features], type = "score"))
     expect_identical(sol, before)
     row <- env$results[env$results$SOL == sol$num, ]
     expect_equal(row$TEST_FN, metrics$fn)

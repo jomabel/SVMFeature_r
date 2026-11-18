@@ -1,8 +1,8 @@
 # svmfsmeta 0.1.0
 
 * Initial release.
-* Solutions are S3 objects with a `predict()` method for class labels or decision
-  scores on unlabeled data. `evaluate_test()` reuses this prediction method.
+* Adds `predict_solution()` for class labels or decision scores on unlabeled
+  data. It accepts evaluated solution lists, and `evaluate_test()` reuses it.
 * Adds `evaluate_test()` for held-out classification metrics using fixed
   classifiers, without changing training results or Pareto ranks. Includes
   a stratified Colon training/test example with training-only normalization.

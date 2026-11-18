@@ -132,24 +132,23 @@ positions in `solution_list`.
 After sorting, `SOL_DOM_BY` equals the number of identifiers in `DOMINATED_BY`;
 the sorting algorithm uses a separate working counter.
 
-### `predict(solution, newdata, type = "class")`
+### `predict_solution(solution, newdata, type = "class")`
 
-Solutions have S3 class `solution`. Use `predict()` on an evaluated solution
-to classify one or more observations without their true labels:
+Use `predict_solution()` on an evaluated solution to classify one or more
+observations without their true labels:
 
 ```r
 new_observations <- test[selected$features]  # Already scaled using training parameters
-predict(selected, newdata = new_observations, type = "class")
-predict(selected, newdata = new_observations, type = "score")
-predict(selected, newdata = new_observations[1, , drop = FALSE])
+predict_solution(selected, newdata = new_observations, type = "class")
+predict_solution(selected, newdata = new_observations, type = "score")
+predict_solution(selected, newdata = new_observations[1, , drop = FALSE])
 ```
 
 Predictor columns are matched by name; extra columns are ignored. The returned
 vector keeps row order and uses row names as observation names. Scores are
 oriented toward class `1`; a score of zero predicts `1`. Scores are not
-probabilities. Reuse preprocessing fitted on training data; `predict()` does
-not fit or apply normalization. For evaluated lists saved before S3 support,
-assign `class(selected) <- "solution"` before calling `predict()`.
+probabilities. Reuse preprocessing fitted on training data; `predict_solution()`
+does not fit or apply normalization. It accepts evaluated solution lists directly.
 
 ### `evaluate_test(solution, data, output)`
 
@@ -157,7 +156,7 @@ Evaluates a previously trained solution on held-out data using its stored
 classifier. Returns a separate list with `error_rate`, `n_errors`, `n_samples`,
 FN/FP (`fn`, `fp`), accuracy, precision, recall, F1, kappa, AUC,
 `confusion_matrix`, `predictions` and `decision_scores`.
-The function obtains its decision scores through `predict()`.
+The function obtains its decision scores through `predict_solution()`.
 The training metrics, objectives and Pareto ranks are unchanged. Class `1` is
 positive, including scores of zero. AUC is `NA` for a single true class.
 Undefined precision and recall follow the training convention (`NA`/`NaN`).

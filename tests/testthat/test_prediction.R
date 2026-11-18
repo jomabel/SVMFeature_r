@@ -7,19 +7,20 @@ prediction_model <- function(direction = 1) {
   evaluate_solution(sol, data, "y")
 }
 
-test_that("solutions dispatch predict for one or many unlabeled observations", {
+test_that("solution lists predict one or many unlabeled observations", {
   for (direction in c(1, -1)) {
     sol <- prediction_model(direction)
     before <- sol
-    expect_s3_class(sol, "solution")
+    expect_type(sol, "list")
+    expect_null(attr(sol, "class"))
     data <- data.frame(unused = letters[1:3], x = c(2, 6, 10), row.names = c("c", "a", "b"))
     original <- data
-    expect_equal(predict(sol, data), c(c = -1, a = 1, b = 1))
-    expect_equal(predict(sol, data, type = "score"), c(c = -4, a = 0, b = 4))
-    expect_equal(predict(sol, data[2, , drop = FALSE]), c(a = 1))
+    expect_equal(predict_solution(solution = sol, newdata = data), c(c = -1, a = 1, b = 1))
+    expect_equal(predict_solution(sol, data, type = "score"), c(c = -4, a = 0, b = 4))
+    expect_equal(predict_solution(sol, data[2, , drop = FALSE]), c(a = 1))
     expect_identical(sol, before)
     expect_identical(data, original)
-    expect_error(predict(sol, data, type = "probability"), "arg")
+    expect_error(predict_solution(sol, data, type = "probability"), "arg")
   }
 })
 
@@ -29,24 +30,25 @@ test_that("prediction validates predictors and evaluated planes", {
   for (bad in list(data[FALSE, , drop = FALSE], data.frame(z = 1),
                    data.frame(x = NA_real_), data.frame(x = Inf),
                    data.frame(x = TRUE), data.frame(x = "1"), data.frame(x = 1i))) {
-    expect_error(predict(sol, bad))
+    expect_error(predict_solution(sol, bad))
   }
-  expect_error(predict(sol, 1), "data frame")
-  expect_error(predict(solution(0, 1, "MC"), data), "evaluated")
+  expect_error(predict_solution(sol, 1), "data frame")
+  expect_error(predict_solution(solution(0, 1, "MC"), data), "evaluated")
   sol$plane_term_b <- c(1, 1, 1)
-  expect_error(predict(sol, data), "distinct")
+  expect_error(predict_solution(sol, data), "distinct")
   sol <- prediction_model()
   sol$plane_coord <- 2
-  expect_error(predict(sol, data.frame(x = .Machine$double.xmax)), "scores")
+  expect_error(predict_solution(sol, data.frame(x = .Machine$double.xmax)), "scores")
 })
 
-test_that("evaluation uses S3 prediction and supports old evaluated lists", {
+test_that("evaluation calls predict_solution directly", {
   sol <- prediction_model()
   data <- data.frame(x = c(2, 6, 10), y = c(-1, 1, 1))
-  # A method override proves evaluation calls prediction, rather than
+  # A function override proves evaluation calls prediction, rather than
   # independently recalculating the original stored planes.
   local_mocked_bindings(
-    predict.solution = function(object, newdata, type = c("class", "score"), ...) {
+    predict_solution = function(solution, newdata, type = c("class", "score")) {
+      expect_identical(solution, sol)
       expect_identical(type, "score")
       stats::setNames(c(2, -1, -3), rownames(newdata))
     }, .package = "svmfsmeta"
@@ -57,11 +59,13 @@ test_that("evaluation uses S3 prediction and supports old evaluated lists", {
   expect_equal(result$error_rate, 1)
 })
 
-test_that("legacy evaluation uses a local class without changing saved lists", {
-  legacy <- unclass(prediction_model())
-  before <- legacy
+test_that("prediction and evaluation preserve saved lists with a class attribute", {
+  saved <- prediction_model()
+  class(saved) <- "solution"
+  before <- saved
   data <- data.frame(x = c(2, 6, 10), y = c(-1, 1, 1))
-  result <- evaluate_test(legacy, data, "y")
+  expect_equal(predict_solution(saved, data), c(`1` = -1, `2` = 1, `3` = 1))
+  result <- evaluate_test(saved, data, "y")
   expect_equal(result$error_rate, 0)
-  expect_identical(legacy, before)
+  expect_identical(saved, before)
 })

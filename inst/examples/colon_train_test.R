@@ -46,8 +46,8 @@ result <- run.svm_fs_meta(optimizer)
 front <- Filter(function(sol) sol$front == 1, result$population$solution_list)
 cat("\nPrediction for one unlabeled test observation using the first solution:\n")
 new_observation <- test[1, inputs, drop = FALSE]
-print(predict(front[[1]], newdata = new_observation, type = "class"))
-print(predict(front[[1]], newdata = new_observation, type = "score"))
+print(predict_solution(front[[1]], newdata = new_observation, type = "class"))
+print(predict_solution(front[[1]], newdata = new_observation, type = "score"))
 results <- do.call(rbind, lapply(front, function(sol) {
   held_out <- evaluate_test(sol, test, "y")
   row <- list(SOL = sol$num)
