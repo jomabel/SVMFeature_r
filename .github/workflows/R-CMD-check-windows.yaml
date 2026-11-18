@@ -75,7 +75,13 @@ jobs:
 
       - name: Install manual fonts and index tools
         shell: pwsh
+        timeout-minutes: 5
+        env:
+          TEXLIVE_PREFER_OWN: "1"
         run: |
+          # Rtools' compression utilities make tlmgr extremely slow on Windows.
+          # This PATH change is local to this step; later steps retain Rtools.
+          $env:PATH = ($env:PATH -split ';' | Where-Object { $_ -notmatch '(^|[\\/])rtools[0-9]*([\\/]|$)' }) -join ';'
           tlmgr install courier makeindex
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           kpsewhich pcrr8t.tfm
