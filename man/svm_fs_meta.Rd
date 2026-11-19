@@ -72,9 +72,9 @@ Logical values are also accepted.}
 }
 \value{
 An S3 object of class "svm_fs_meta" containing the input data,
-  predictor and response names, optimization settings, and a configured
-  \code{population} element. Call \code{run.svm_fs_meta()} to generate and
-  optimize its candidate solutions.
+predictor and response names, optimization settings, and a configured
+\code{population} element. Call \code{run.svm_fs_meta()} to generate and
+optimize its candidate solutions.
 }
 \description{
 Configures multi-objective support vector machine (SVM) optimization for
@@ -82,17 +82,17 @@ binary classification with a fixed number of selected features.
 }
 \details{
 The current evolutionary operators require at least three individuals and
-  two observations in each response class. Data-frame subclasses are converted
-  locally to a base data frame. Columns outside the selected inputs and output
-  are not used and need not be numeric or complete.
+two observations in each response class. Data-frame subclasses are converted
+locally to a base data frame. Columns outside the selected inputs and output
+are not used and need not be numeric or complete.
 
-  The feature count is fixed by \code{num_fea}; candidate solutions differ in
-  which features they select, rather than in how many they select.
+The feature count is fixed by \code{num_fea}; candidate solutions differ in
+which features they select, rather than in how many they select.
 
-  In "MC" mode, class 1 is positive. The third objective is the false-negative
-  count and the fourth is the false-positive count. These use the same
-  intermediate-plane predictions as the reported confusion matrix; scores
-  of zero are assigned to class 1.
+In "MC" mode, class 1 is positive. The third objective is the false-negative
+count and the fourth is the false-positive count. These use the same
+intermediate-plane predictions as the reported confusion matrix; scores
+of zero are assigned to class 1.
 }
 \examples{
 data <- data.frame(

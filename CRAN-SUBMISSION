@@ -1,10 +1,24 @@
 This is the initial submission of svmfsmeta (version 0.1.0) to CRAN.
 
+Validation status: the current S3 interface and mutation-cache changes passed
+local installed-package checks with R 4.5.1 on Windows 11 (build 26200):
+- R CMD check --as-cran --no-manual: 0 ERRORs | 0 WARNINGs | 0 NOTEs.
+- CRAN incoming remote checks and system-clock checks were disabled locally.
+- Unit tests: 1,365 passing expectations, with no failures, warnings or skips.
+- Examples and vignette rebuilding passed. All README usage blocks also ran
+  successfully against the installed package.
+- Documentation regeneration with roxygen2 7.3.3 is idempotent.
+- Archive and logs: results/cran/s3-local/windows-r-4.5.1-23860/.
+
+The cross-platform results below describe the earlier archive identified by
+its SHA256. Full Linux/Windows checks, including manuals, with current R and
+R-devel must be refreshed for the modified source before submission.
+
 The package implements multiobjective SVM feature selection using NSGA-II,
 with classification metrics, prediction, held-out evaluation, visualization,
 and CSV export.
 
-Current source validation:
+Previous cross-platform source validation:
 - Check date: 2026-11-18
 - Source commit: b4a7aabc04d9e337a3772a54dd801b642a325b1f
 - Linux build branch: codex/linux-cran-check

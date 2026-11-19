@@ -1,6 +1,11 @@
 # svmfsmeta 0.1.0
 
 * Initial release.
+* Adds S3 print, summary and plot methods for optimizers and populations,
+  and print and predict methods for individual solutions. The `run()` generic
+  dispatches to `run.svm_fs_meta()`; existing function calls remain supported.
+* Mutations invalidate cached evaluation results when the classifier changes,
+  preventing predictions with stale intercepts and metrics until reevaluation.
 * Adds `predict_solution()` for class labels or decision scores on unlabeled
   data. It accepts evaluated solution lists, and `evaluate_test()` reuses it.
 * Adds `evaluate_test()` for held-out classification metrics using fixed

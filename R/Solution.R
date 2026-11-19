@@ -1,3 +1,45 @@
+#' Inspect and Predict from a Solution
+#'
+#' @description
+#' Prints a compact description of a solution or predicts new observations
+#' using its fixed evaluated classifier.
+#' @param x A solution object.
+#' @param object An evaluated solution object.
+#' @param newdata A nonempty data frame containing the selected predictors.
+#' @param type Return class labels or signed decision scores.
+#' @param ... Additional arguments, currently unused.
+#' @return \code{print()} returns \code{x} invisibly. \code{predict()} returns
+#'   the same named numeric vector as \code{predict_solution()}.
+#' @name solution_methods
+NULL
+
+#' @rdname solution_methods
+#' @export
+print.solution <- function(x, ...) {
+  cat("Solution", x$num, "(", x$obj_fn, ")\n")
+  features <- unlist(x$features, use.names = FALSE)
+  cat("Selected features:", length(features), "\n")
+  if (length(features)) {
+    cat(paste(utils::head(features, 6L), collapse = ", "),
+        if (length(features) > 6L) ", ..." else "", "\n", sep = "")
+  }
+  if (isTRUE(x$successful_evaluation)) {
+    cat("Objectives: distance =", x$objective[1], "; epsilon =", x$objective[2],
+        "; FN =", x$objective[3], "; FP =", x$objective[4], "\n")
+    cat("Accuracy:", x$accuracy, "; F1:", x$f1, "\n")
+  } else {
+    cat("Not evaluated.\n")
+  }
+  invisible(x)
+}
+
+#' @rdname solution_methods
+#' @importFrom stats predict
+#' @export
+predict.solution <- function(object, newdata, type = c("class", "score"), ...) {
+  predict_solution(object, newdata, type = type)
+}
+
   #' @title Definition of the solution Class
 #'
 #' @description
@@ -7,8 +49,8 @@
 #' @param num_features Number of features
 #' @param obj Objective
 #'
-#' @return A solution stored as a list. Evaluated solutions can be passed to
-#'   \code{predict_solution()} for new observations.
+#' @return An S3 object of class \code{solution}, stored as a list. Evaluated
+#'   solutions support \code{predict()} and \code{predict_solution()}.
 #'
 #' @export
 #'
@@ -34,6 +76,7 @@ solution <- function(num, num_features, obj) {
     crowding_distance = 0
   )
 
+  class(solution) <- "solution"
   return(solution)
 }
 
@@ -890,6 +933,8 @@ compare_solutions <- function(solution1, solution2) {
 #'   Each replacement is sampled directly from observations of the same class,
 #'   excluding the current vector. If no alternative exists, the current vector
 #'   is retained.
+#'   Replacing a vector invalidates cached evaluation results. Call
+#'   \code{evaluate_solution()} before predicting again.
 #'
 #' @param solution solution class object to mutate
 #' @param data A data.frame with the input features.
@@ -905,6 +950,7 @@ compare_solutions <- function(solution1, solution2) {
 #' sol <- generate_random_solution(sol, data, c("x1", "x2"), "y")
 #' sol <- mutate_vectors(sol, data, "y")
 mutate_vectors <- function(solution, data, output) {
+  previous_vectors <- solution$vectors
   # Get unique classes and sort them
   classes <- sort(unique(data[[output]]))
 
@@ -923,5 +969,8 @@ mutate_vectors <- function(solution, data, output) {
     }
   }
 
+  if (!identical(previous_vectors, solution$vectors)) {
+    solution <- .invalidate_solution_evaluation(solution)
+  }
   return(solution)
 }

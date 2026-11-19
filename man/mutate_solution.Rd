@@ -26,6 +26,8 @@ This function mutates a solution based on mutation probabilities and coordinates
 \details{
 In the scaling strategy, a mutated coordinate outside \code{[-1, 1]}
 is divided by ten, applying the same correction to either sign.
+If features, vectors or coefficients change, cached evaluation results are
+invalidated. Call \code{evaluate_solution()} before predicting again.
 }
 \examples{
 data <- data.frame(

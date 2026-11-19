@@ -14,8 +14,8 @@ solution(num, num_features, obj)
 \item{obj}{Objective}
 }
 \value{
-A solution stored as a list. Evaluated solutions can be passed to
-\code{predict_solution()} for new observations.
+An S3 object of class \code{solution}, stored as a list. Evaluated
+solutions support \code{predict()} and \code{predict_solution()}.
 }
 \description{
 Defines the \code{solution} class, which represents an individual solution.

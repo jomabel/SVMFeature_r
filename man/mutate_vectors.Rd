@@ -23,6 +23,8 @@ This function mutates the vectors in the solution by assigning new class vectors
 Each replacement is sampled directly from observations of the same class,
 excluding the current vector. If no alternative exists, the current vector
 is retained.
+Replacing a vector invalidates cached evaluation results. Call
+\code{evaluate_solution()} before predicting again.
 }
 \examples{
 data <- data.frame(x1 = rnorm(4), x2 = rnorm(4), y = c(-1, 1, 1, -1))

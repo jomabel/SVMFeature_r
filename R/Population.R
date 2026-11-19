@@ -1,3 +1,77 @@
+.population_solution_table <- function(object) {
+  fields <- c("SOL", "FRONT", "DIST", "EPS", "MCPOS", "MCNEG", "ACCURACY",
+              "F1", "PRECISION", "RECALL", "KAPPA", "AUC")
+  if (!length(object$solution_list)) {
+    result <- as.data.frame(stats::setNames(rep(list(numeric()), length(fields)), fields))
+    result$FEATURES <- character()
+    result$EVALUATED <- logical()
+    return(result)
+  }
+  rows <- lapply(object$solution_list, function(sol) {
+    values <- lapply(to_dict(sol)[fields], function(value) {
+      if (is.null(value)) NA_real_ else value
+    })
+    row <- as.data.frame(values, stringsAsFactors = FALSE)
+    row$FEATURES <- paste(unlist(sol$features, use.names = FALSE), collapse = ", ")
+    row$EVALUATED <- isTRUE(sol$successful_evaluation)
+    row
+  })
+  do.call(rbind, rows)
+}
+
+#' Inspect a Population
+#'
+#' @description
+#' Prints a compact population description, returns a structured summary, or
+#' plots its first non-dominated front. Summaries use the current solution
+#' lists, including when no cached population table is available.
+#' @param x A population or population summary object.
+#' @param object A population object.
+#' @param ... Additional arguments forwarded to printing or plotting.
+#' @return \code{summary()} returns a \code{summary.population} list with
+#'   \code{size}, \code{target_size}, \code{num_features}, \code{objective},
+#'   \code{front_sizes} and a \code{solutions} data frame. Printing returns its
+#'   input invisibly. Plotting returns the result of \code{draw_solution()}.
+#' @name population_methods
+NULL
+
+#' @rdname population_methods
+#' @export
+summary.population <- function(object, ...) {
+  rows <- .population_solution_table(object)
+  fronts <- table(rows$FRONT[rows$FRONT > 0 & rows$EVALUATED])
+  front_sizes <- data.frame(front = as.integer(names(fronts)),
+                            n_solutions = as.integer(fronts))
+  structure(list(size = nrow(rows), target_size = object$pop_size,
+                 num_features = object$num_features, objective = object$objective,
+                 front_sizes = front_sizes, solutions = rows),
+            class = "summary.population")
+}
+
+#' @rdname population_methods
+#' @export
+print.summary.population <- function(x, ...) {
+  cat("Population:", x$size, "solutions; target size:", x$target_size, "\n")
+  cat("Objective:", x$objective, "; features per solution:", x$num_features, "\n")
+  if (nrow(x$front_sizes)) print(x$front_sizes, ...)
+  invisible(x)
+}
+
+#' @rdname population_methods
+#' @export
+print.population <- function(x, ...) {
+  print(summary(x), ...)
+  invisible(x)
+}
+
+#' @rdname population_methods
+#' @importFrom graphics plot
+#' @export
+plot.population <- function(x, ...) {
+  draw_solution(list(objective = x$objective,
+                     population = list(df_solutions = .population_solution_table(x))), ...)
+}
+
 #' @title Definition of the population Class
 #'
 #' @description
@@ -596,6 +670,8 @@ new_population <- function(population, data, inputs, output) {
 #' @details
 #'   In the scaling strategy, a mutated coordinate outside \code{[-1, 1]}
 #'   is divided by ten, applying the same correction to either sign.
+#'   If features, vectors or coefficients change, cached evaluation results are
+#'   invalidated. Call \code{evaluate_solution()} before predicting again.
 #'
 #' @param solution solution object to mutate
 #' @param population population class object that contains mutation parameters
@@ -620,6 +696,7 @@ new_population <- function(population, data, inputs, output) {
 #' sol <- generate_random_solution(sol, data, c("x1", "x2"), "y")
 #' mut_sol <- mutate_solution(sol, pop, data, c("x1", "x2"), "y")
 mutate_solution <- function(solution, population, data, inputs, output) {
+  previous_classifier <- solution[c("features", "vectors", "plane_coord")]
   random <- runif(1)
 
   # Vector mutation
@@ -660,6 +737,9 @@ mutate_solution <- function(solution, population, data, inputs, output) {
     }
   }
 
+  if (!identical(previous_classifier, solution[c("features", "vectors", "plane_coord")])) {
+    solution <- .invalidate_solution_evaluation(solution)
+  }
   return(solution)
 }
 

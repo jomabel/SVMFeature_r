@@ -6,8 +6,9 @@ Version: 0.1.0
 Description: Solves the bi-objective soft-margin support vector machine (SVM) with feature selection (FS) problem. Implements a metaheuristic based on the Non-dominated Sorting Genetic Algorithm II (NSGA-II) for Pareto frontier approximation, together with tools for model assessment and visualization. Methods implemented in the package are described in Alcaraz (2024) <doi:10.1016/j.cor.2024.106821> and Valero-Carreras et al. (2023) <doi:10.1016/j.cor.2022.106131>.
 License: AGPL (>= 3)
 Encoding: UTF-8
-RoxygenNote: 7.3.2
+RoxygenNote: 7.3.3
 Imports:
+    graphics,
     dplyr (>= 1.1.0),
     ggplot2 (>= 3.4.0),
     magrittr,

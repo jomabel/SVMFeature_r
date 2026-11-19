@@ -13,15 +13,15 @@ draw_solution(x, ...)
 }
 \value{
 A \code{ggplot} object displaying front 1, returned invisibly after
-  printing the plot. Returns \code{NULL} if there are no solutions to plot
-  or the objective is unsupported.
+printing the plot. Returns \code{NULL} if there are no solutions to plot
+or the objective is unsupported.
 }
 \description{
 Draw the Pareto Front of an svm_fs_meta object
 }
 \details{
 For "MC", the horizontal axis shows false negatives (\code{MCPOS}) and
-  the vertical axis shows false positives (\code{MCNEG}).
+the vertical axis shows false positives (\code{MCNEG}).
 }
 \examples{
 data <- data.frame(

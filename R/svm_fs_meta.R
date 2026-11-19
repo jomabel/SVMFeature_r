@@ -1,3 +1,77 @@
+#' Run an Optimizer
+#' @param object An optimizer object.
+#' @param ... Additional arguments passed to methods.
+#' @return The evaluated optimizer returned by the applicable method.
+#' @export
+run <- function(object, ...) UseMethod("run")
+
+#' Inspect an SVM Feature Selection Optimizer
+#'
+#' @description
+#' Prints a compact description, summarizes the configuration and current
+#' population, or plots the first non-dominated front. These methods also
+#' accept configured objects whose optimization has not yet been run.
+#' @param x An optimizer or optimizer summary object.
+#' @param object An object of class \code{svm_fs_meta}.
+#' @param ... Additional arguments forwarded to printing or plotting.
+#' @return \code{summary()} returns a \code{summary.svm_fs_meta} list containing
+#'   \code{n_samples}, \code{n_inputs}, \code{num_features}, \code{objective},
+#'   \code{mode}, \code{n_iter}, \code{max_time} and a population summary.
+#'   Printing returns its input invisibly. Plotting returns the result of
+#'   \code{draw_solution()}.
+#' @name svm_fs_meta_methods
+#' @examples
+#' data <- data.frame(x = c(2, 4, 8, 10), y = c(-1, -1, 1, 1))
+#' obj <- svm_fs_meta(data, "x", "y", 4, 1, n_iter = 1, clones = 1)
+#' print(obj)
+#' set.seed(42)
+#' fit <- run(obj)
+#' summary(fit)
+#' plot(fit)
+#' summary(fit$population)
+#' plot(fit$population)
+#' selected <- fit$population$solution_list[[1]]
+#' print(selected)
+#' predict(selected, data.frame(x = 6))
+NULL
+
+#' @rdname svm_fs_meta_methods
+#' @export
+summary.svm_fs_meta <- function(object, ...) {
+  structure(list(n_samples = nrow(object$data), n_inputs = length(object$inputs),
+                 num_features = object$num_fea, objective = object$objective,
+                 mode = object$mode, n_iter = object$n_iter, max_time = object$max_time,
+                 population = summary(object$population)),
+            class = "summary.svm_fs_meta")
+}
+
+#' @rdname svm_fs_meta_methods
+#' @export
+print.summary.svm_fs_meta <- function(x, ...) {
+  cat("SVM feature selection:", x$objective, "\n")
+  cat("Training observations:", x$n_samples, "; candidate predictors:", x$n_inputs, "\n")
+  if (x$mode == "iters") {
+    cat("Iteration budget:", x$n_iter, "\n")
+  } else {
+    cat("Time budget:", x$max_time, "seconds\n")
+  }
+  print(x$population, ...)
+  invisible(x)
+}
+
+#' @rdname svm_fs_meta_methods
+#' @export
+print.svm_fs_meta <- function(x, ...) {
+  print(summary(x), ...)
+  invisible(x)
+}
+
+#' @rdname svm_fs_meta_methods
+#' @export
+plot.svm_fs_meta <- function(x, ...) {
+  draw_solution(x, ...)
+}
+
 utils::globalVariables(c("FRONT"))
 utils::globalVariables(c("DIST"))
 utils::globalVariables(c("EPS"))
@@ -193,6 +267,7 @@ svm_fs_meta <- function(data, inputs, output, pop_size, num_fea,
 
 #' Run the svm_fs_meta optimization process
 #' @param object An object of class "svm_fs_meta".
+#' @param ... Additional arguments, currently unused.
 #' @return An updated S3 object of class "svm_fs_meta", retaining the input data
 #'   and optimization settings. Its \code{population} element is an object of
 #'   class "population" containing:
@@ -230,7 +305,7 @@ svm_fs_meta <- function(data, inputs, output, pop_size, num_fea,
 #'   classes in columns, ordered as -1, 1.
 #'   The historical summary-table and CSV columns \code{MCPOS} and \code{MCNEG}
 #'   contain false-negative and false-positive counts, respectively.
-#' @export
+#' @export run.svm_fs_meta
 #'
 #' @examples
 #' data <- data.frame(
@@ -251,7 +326,8 @@ svm_fs_meta <- function(data, inputs, output, pop_size, num_fea,
 #' selected$plane_term_b
 #' selected[c("accuracy", "precision", "recall", "f1", "kappa", "auc",
 #'            "conf_matrix")]
-run.svm_fs_meta <- function(object) {
+#' @exportS3Method run svm_fs_meta
+run.svm_fs_meta <- function(object, ...) {
 
   object$population <- generate_initial_population(object$population, object$data,
                                                    object$inputs, object$output)

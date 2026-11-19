@@ -88,7 +88,7 @@ obj <- svm_fs_meta(
 )
 
 # 5. Execute optimization
-result <- run.svm_fs_meta(obj)
+result <- run(obj)
 
 # 6. Inspect one candidate from the training Pareto front
 front_solutions <- Filter(
@@ -97,8 +97,8 @@ front_solutions <- Filter(
 )
 selected <- front_solutions[[1]]
 new_observation <- test[1, selected$features, drop = FALSE]
-predict_solution(selected, newdata = new_observation, type = "class")
-predict_solution(selected, newdata = new_observation, type = "score")
+predict(selected, newdata = new_observation, type = "class")
+predict(selected, newdata = new_observation, type = "score")
 
 # 7. Evaluate this fixed classifier on the held-out observations
 test_metrics <- evaluate_test(selected, test, output = "y")
@@ -106,7 +106,7 @@ test_metrics$error_rate
 test_metrics$confusion_matrix
 
 # 8. Visualize and save the training Pareto front
-draw_solution(result)
+plot(result)
 csv_file <- save_results(result, output_dir = tempdir(), dataset_name = "colon")
 ```
 
@@ -115,6 +115,33 @@ Training predictors are scaled to `[0, 1]`, with constant training predictors ma
 The dataset is described by [Alon et al. (1999)](https://doi.org/10.1073/pnas.96.12.6745). See `help("Colon", package = "plsgenomics")` for its source and documentation. Predictor names are assigned as `x1` to `x2000` in this example; the original gene identifiers remain available in `Colon$gene.names`.
 
 ---
+
+## Inspecting the fitted objects
+
+The optimizer and population have S3 classes `svm_fs_meta` and `population`.
+Individual classifiers are lists with S3 class `solution`. Use the standard
+methods to inspect their results:
+
+```r
+print(result)
+fit_summary <- summary(result)
+fit_summary$population$front_sizes
+population_summary <- summary(result$population)
+population_summary$solutions
+print(selected)
+plot(result$population)
+```
+
+Summaries return structured objects and do not change the fitted classifiers.
+Configured optimizers and empty populations can also be printed and summarized.
+Predictions are made with a selected individual solution; select it using the
+training objectives before evaluating on the independent test set.
+
+The existing functions `run.svm_fs_meta()`, `draw_solution()`,
+`print_population()` and `predict_solution()` remain available. In particular,
+`predict_solution()` also accepts saved solution lists without a class attribute.
+Mutations that change a solution invalidate its stored objectives and metrics;
+call `evaluate_solution()` again before predicting from the mutated solution.
 
 ## 🛠️ API Reference
 
@@ -142,7 +169,7 @@ Initializes the optimization object.
 
 In time mode, the timer starts after the initial population has been generated, sorted into fronts, and summarized. The budget is checked before each iteration, and an iteration already started runs to completion. Total runtime therefore includes initialization and may exceed `max_time`; this is not a strict timeout.
 
-### `run.svm_fs_meta(object)`
+### `run(object)` and `run.svm_fs_meta(object)`
 Runs the optimization and returns an updated S3 object of class `svm_fs_meta`. It contains the original data and configuration, plus the final population in `result$population`.
 
 The population contains a summary table, `df_solutions`, and the individual candidate lists, `solution_list`. The table includes all retained fronts; use `FRONT == 1` to extract its non-dominated candidates:
@@ -172,7 +199,7 @@ positions in `solution_list`.
 After sorting, `SOL_DOM_BY` equals the number of identifiers in `DOMINATED_BY`;
 the sorting algorithm uses a separate working counter.
 
-### `predict_solution(solution, newdata, type = "class")`
+### `predict(solution, newdata, type = "class")` and `predict_solution()`
 
 Use `predict_solution()` on an evaluated solution to classify one or more
 observations without their true labels:

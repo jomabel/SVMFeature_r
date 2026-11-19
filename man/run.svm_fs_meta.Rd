@@ -4,53 +4,55 @@
 \alias{run.svm_fs_meta}
 \title{Run the svm_fs_meta optimization process}
 \usage{
-run.svm_fs_meta(object)
+\method{run}{svm_fs_meta}(object, ...)
 }
 \arguments{
 \item{object}{An object of class "svm_fs_meta".}
+
+\item{...}{Additional arguments, currently unused.}
 }
 \value{
 An updated S3 object of class "svm_fs_meta", retaining the input data
-  and optimization settings. Its \code{population} element is an object of
-  class "population" containing:
-  \describe{
-    \item{solution_list}{A list of the retained candidate solutions. Each
-      solution is a list containing its selected feature names in
-      \code{features}, normal coefficients in \code{plane_coord}, and three
-      intercepts in \code{plane_term_b}. The coefficients follow the order of
-      \code{features}; the intercepts correspond to the negative-class margin
-      plane, positive-class margin plane, and intermediate classifier plane.
-      Its \code{objective} vector contains distance, epsilon, false negatives,
-      and false positives, in that order.}
-    \item{df_solutions}{A data frame with one row per retained solution,
-      ordered by front. The numeric \code{FRONT} column gives the front number;
-      the other columns currently contain lists of solution values.}
-    \item{fronts}{The front membership information produced by non-dominated
-      sorting.}
-  }
+and optimization settings. Its \code{population} element is an object of
+class "population" containing:
+\describe{
+\item{solution_list}{A list of the retained candidate solutions. Each
+solution is a list containing its selected feature names in
+\code{features}, normal coefficients in \code{plane_coord}, and three
+intercepts in \code{plane_term_b}. The coefficients follow the order of
+\code{features}; the intercepts correspond to the negative-class margin
+plane, positive-class margin plane, and intermediate classifier plane.
+Its \code{objective} vector contains distance, epsilon, false negatives,
+and false positives, in that order.}
+\item{df_solutions}{A data frame with one row per retained solution,
+ordered by front. The numeric \code{FRONT} column gives the front number;
+the other columns currently contain lists of solution values.}
+\item{fronts}{The front membership information produced by non-dominated
+sorting.}
+}
 }
 \description{
 Run the svm_fs_meta optimization process
 }
 \details{
 In time mode, \code{object$max_time} is an approximate budget for the
-  optimization loop. Timing starts after the initial population has been
-  generated, sorted into fronts, and summarized. The budget is checked before
-  each iteration, and an iteration already started runs to completion. Total
-  runtime therefore includes initialization and may exceed the requested
-  budget; this is not a strict timeout.
+optimization loop. Timing starts after the initial population has been
+generated, sorted into fronts, and summarized. The budget is checked before
+each iteration, and an iteration already started runs to completion. Total
+runtime therefore includes initialization and may exceed the requested
+budget; this is not a strict timeout.
 
-  Front 1 contains the non-dominated solutions in the final population and
-  provides an approximation to the problem's Pareto front. Both
-  \code{solution_list} and \code{df_solutions} include all retained fronts.
+Front 1 contains the non-dominated solutions in the final population and
+provides an approximation to the problem's Pareto front. Both
+\code{solution_list} and \code{df_solutions} include all retained fronts.
 
-  Each solution also stores \code{accuracy}, \code{precision}, \code{recall},
-  \code{f1}, \code{kappa}, \code{auc}, and \code{conf_matrix}. These metrics
-  are calculated on the data used for optimization, with class 1 treated as
-  positive. The confusion matrix has true classes in rows and predicted
-  classes in columns, ordered as -1, 1.
-  The historical summary-table and CSV columns \code{MCPOS} and \code{MCNEG}
-  contain false-negative and false-positive counts, respectively.
+Each solution also stores \code{accuracy}, \code{precision}, \code{recall},
+\code{f1}, \code{kappa}, \code{auc}, and \code{conf_matrix}. These metrics
+are calculated on the data used for optimization, with class 1 treated as
+positive. The confusion matrix has true classes in rows and predicted
+classes in columns, ordered as -1, 1.
+The historical summary-table and CSV columns \code{MCPOS} and \code{MCNEG}
+contain false-negative and false-positive counts, respectively.
 }
 \examples{
 data <- data.frame(

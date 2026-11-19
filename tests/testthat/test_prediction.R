@@ -12,7 +12,7 @@ test_that("solution lists predict one or many unlabeled observations", {
     sol <- prediction_model(direction)
     before <- sol
     expect_type(sol, "list")
-    expect_null(attr(sol, "class"))
+    expect_s3_class(sol, "solution")
     data <- data.frame(unused = letters[1:3], x = c(2, 6, 10), row.names = c("c", "a", "b"))
     original <- data
     expect_equal(predict_solution(solution = sol, newdata = data), c(c = -1, a = 1, b = 1))
