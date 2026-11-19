@@ -611,7 +611,9 @@ evaluate_solution <- function(solution, data, output) {
 #'
 #' @description
 #' Applies a solution's fixed classifier to one or more new observations without
-#' requiring their true classes or refitting the classifier.
+#' requiring their true classes or refitting the classifier. Prefer the standard
+#' \code{predict()} method for solution objects; this helper also accepts
+#' evaluated lists saved without a class attribute.
 #'
 #' @param solution A valid solution previously evaluated on training data.
 #' @param newdata A nonempty data frame with the selected predictors. A single
@@ -636,8 +638,10 @@ evaluate_solution <- function(solution, data, output) {
 #' sol$vectors <- list(1L, 4L)
 #' sol$plane_coord <- 1
 #' sol <- evaluate_solution(sol, train, "y")
-#' predict_solution(sol, newdata = data.frame(x = 0.5))
-#' predict_solution(sol, newdata = data.frame(x = c(-0.5, 0, 0.5)), type = "score")
+#' predict(sol, newdata = data.frame(x = 0.5))
+#' predict(sol, newdata = data.frame(x = c(-0.5, 0, 0.5)), type = "score")
+#' # Compatibility with saved lists without a class attribute:
+#' predict_solution(unclass(sol), newdata = data.frame(x = 0.5))
 predict_solution <- function(solution, newdata, type = c("class", "score")) {
   type <- match.arg(type)
   finite_numeric <- function(x) {

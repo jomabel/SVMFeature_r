@@ -185,7 +185,8 @@ generate_initial_population <- function(population, data, inputs, output) {
 #' @title Print population
 #'
 #' @description
-#'   This function prints the population.
+#'   Prints the detailed population table. Use \code{print()} for a compact
+#'   description or \code{summary()} for structured results.
 #'
 #' @param population population class object
 #'
@@ -203,7 +204,9 @@ generate_initial_population <- function(population, data, inputs, output) {
 #' pop <- population(pop_size = 2, num_features = 2, objective = "DIST-EPS")
 #' pop <- generate_initial_population(pop, data, c("x1", "x2"), "y")
 #' pop <- fnds(pop)
-#' print_population(pop)
+#' print(pop)
+#' summary(pop)
+#' print_population(pop) # Detailed table, retained for compatibility
 print_population <- function(population) {
   # Convert the list of solutions to a data frame
   df_solutions <- do.call(rbind, lapply(population$solution_list, function(solution) {

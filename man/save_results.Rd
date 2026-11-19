@@ -29,7 +29,7 @@ data <- data.frame(
 )
 obj <- svm_fs_meta(data, inputs = c("x1", "x2"), output = "y",
                   pop_size = 4, num_fea = 2, n_iter = 1)
-res <- run.svm_fs_meta(obj)
+res <- run(obj)
 temp_dir <- tempdir()
 save_results(res, output_dir = temp_dir, dataset_name = "test")
 }

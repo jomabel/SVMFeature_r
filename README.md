@@ -12,8 +12,8 @@ The optimizer returns an object containing the final population of candidate cla
 - 📈 **Optimization Objectives**:
   - `DIST-EPS`: maximize the distance between margin planes and minimize the sum of margin-violation distances (epsilon).
   - `MC`: minimize false negatives (FN) and false positives (FP) separately.
-- 🔍 **Visualization**: Built-in `draw_solution()` to inspect the Pareto front.
-- **Prediction and evaluation**: Classify new observations with `predict_solution()` and assess held-out data with `evaluate_test()`.
+- 🔍 **Visualization**: Use `plot()` to inspect the Pareto front.
+- **Prediction and evaluation**: Classify new observations with `predict()` and assess held-out data with `evaluate_test()`.
 - 📤 **Data Export**: Save optimal solutions directly to CSV.
 
 Both `MC` objectives use the central classifier and the same predictions as the reported classification metrics. Class `1` is positive, and a zero decision score predicts `1`. In solution summaries and CSV exports, the historical column names `MCPOS` and `MCNEG` contain FN and FP, respectively. The confusion matrix has true classes in rows and predicted classes in columns: FN is `conf_matrix["1", "-1"]`, and FP is `conf_matrix["-1", "1"]`.
@@ -169,13 +169,13 @@ Initializes the optimization object.
 
 In time mode, the timer starts after the initial population has been generated, sorted into fronts, and summarized. The budget is checked before each iteration, and an iteration already started runs to completion. Total runtime therefore includes initialization and may exceed `max_time`; this is not a strict timeout.
 
-### `run(object)` and `run.svm_fs_meta(object)`
+### `run(object)`
 Runs the optimization and returns an updated S3 object of class `svm_fs_meta`. It contains the original data and configuration, plus the final population in `result$population`.
 
 The population contains a summary table, `df_solutions`, and the individual candidate lists, `solution_list`. The table includes all retained fronts; use `FRONT == 1` to extract its non-dominated candidates:
 
 ```r
-solutions_table <- result$population$df_solutions
+solutions_table <- summary(result$population)$solutions
 pareto_front <- solutions_table[solutions_table$FRONT == 1, , drop = FALSE]
 
 front_solutions <- Filter(
@@ -199,23 +199,23 @@ positions in `solution_list`.
 After sorting, `SOL_DOM_BY` equals the number of identifiers in `DOMINATED_BY`;
 the sorting algorithm uses a separate working counter.
 
-### `predict(solution, newdata, type = "class")` and `predict_solution()`
+### `predict(solution, newdata, type = "class")`
 
-Use `predict_solution()` on an evaluated solution to classify one or more
+Use `predict()` on an evaluated solution to classify one or more
 observations without their true labels:
 
 ```r
 new_observations <- test[selected$features]  # Already scaled using training parameters
-predict_solution(selected, newdata = new_observations, type = "class")
-predict_solution(selected, newdata = new_observations, type = "score")
-predict_solution(selected, newdata = new_observations[1, , drop = FALSE])
+predict(selected, newdata = new_observations, type = "class")
+predict(selected, newdata = new_observations, type = "score")
+predict(selected, newdata = new_observations[1, , drop = FALSE])
 ```
 
 Predictor columns are matched by name; extra columns are ignored. The returned
 vector keeps row order and uses row names as observation names. Scores are
 oriented toward class `1`; a score of zero predicts `1`. Scores are not
-probabilities. Reuse preprocessing fitted on training data; `predict_solution()`
-does not fit or apply normalization. It accepts evaluated solution lists directly.
+probabilities. Reuse preprocessing fitted on training data; `predict()`
+does not fit or apply normalization. Use `predict_solution()` for evaluated lists saved without a class attribute.
 
 ### `evaluate_test(solution, data, output)`
 
@@ -250,8 +250,9 @@ source(system.file("examples", "colon_train_test.R", package = "svmfsmeta"))
 Keep the final test set independent of model selection. If held-out performance
 is used to choose a classifier, use a validation set and a separate final test.
 
-### `draw_solution(x)`
-Generates a `ggplot2` scatter plot of the Pareto front (Front 1).
+### `plot(x)`
+Generates a `ggplot2` scatter plot of the Pareto front (Front 1) from an
+optimizer or population. `draw_solution()` remains available for compatibility.
 
 ### `save_results(object, output_dir, dataset_name="dataset")`
 Exports the Pareto front to a CSV file.

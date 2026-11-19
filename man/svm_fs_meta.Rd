@@ -73,7 +73,7 @@ Logical values are also accepted.}
 \value{
 An S3 object of class "svm_fs_meta" containing the input data,
 predictor and response names, optimization settings, and a configured
-\code{population} element. Call \code{run.svm_fs_meta()} to generate and
+\code{population} element. Call \code{run()} to generate and
 optimize its candidate solutions.
 }
 \description{

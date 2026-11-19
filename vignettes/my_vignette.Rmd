@@ -135,13 +135,15 @@ obj <- svm_fs_meta(
 )
 
 # Execute optimization
-result <- run.svm_fs_meta(obj)
+result <- run(obj)
 ```
 
-`run.svm_fs_meta()` returns an updated S3 object of class `svm_fs_meta`, retaining the original data and configuration. Its `population` field contains the final population. The summary table includes all retained fronts; rows with `FRONT == 1` form the first non-dominated front of that population, which approximates the Pareto front.
+`run()` returns an updated S3 object of class `svm_fs_meta`, retaining the original data and configuration. Its `population` field contains the final population. The summary table includes all retained fronts; rows with `FRONT == 1` form the first non-dominated front of that population, which approximates the Pareto front.
 
 ```{r colon-inspect}
-solutions_table <- result$population$df_solutions
+print(result)
+summary(result)
+solutions_table <- summary(result$population)$solutions
 pareto_front <- solutions_table[solutions_table$FRONT == 1, , drop = FALSE]
 
 front_solutions <- Filter(
@@ -149,6 +151,7 @@ front_solutions <- Filter(
   result$population$solution_list
 )
 selected <- front_solutions[[1]]
+print(selected)
 selected$features      # Selected predictor names
 selected$plane_coord   # Normal coefficients, in the same predictor order
 selected$plane_term_b  # Intercepts: negative-class margin, positive-class margin, central plane
@@ -159,14 +162,29 @@ Here the first front candidate is inspected. Candidate selection depends on the 
 
 ### 3. Visualization
 
-You can visualize the resulting Pareto front using the `draw_solution` function.
+You can visualize the resulting Pareto front using the `plot()` method. This method also accepts population objects.
 
 ```{r colon-plot, fig.width=6, fig.height=4}
 # Plot the first front of solutions
-draw_solution(result)
+plot(result)
+# Alternatively: plot(result$population)
 ```
 
-### 4. Exporting Results
+### 4. Prediction
+
+Use `predict()` on an evaluated solution after applying the training preprocessing.
+These training rows illustrate the interface only, not independent performance.
+
+```{r colon-predict}
+observations <- data[1:2, selected$features, drop = FALSE]
+predict(selected, observations)
+predict(selected, observations, type = "score")
+```
+
+`run.svm_fs_meta()`, `draw_solution()` and `predict_solution()` remain available
+for compatibility. The latter also accepts evaluated lists without a class.
+
+### 5. Exporting Results
 
 The Pareto front solutions can be saved to a CSV file. This example writes them inside a new temporary directory.
 

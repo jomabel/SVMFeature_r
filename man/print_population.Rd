@@ -14,7 +14,8 @@ Invisibly returns the population as a data frame, ordered by front,
 after printing it to the console.
 }
 \description{
-This function prints the population.
+Prints the detailed population table. Use \code{print()} for a compact
+description or \code{summary()} for structured results.
 }
 \examples{
 set.seed(42)
@@ -25,5 +26,7 @@ data <- data.frame(
 pop <- population(pop_size = 2, num_features = 2, objective = "DIST-EPS")
 pop <- generate_initial_population(pop, data, c("x1", "x2"), "y")
 pop <- fnds(pop)
-print_population(pop)
+print(pop)
+summary(pop)
+print_population(pop) # Detailed table, retained for compatibility
 }

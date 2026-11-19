@@ -130,7 +130,7 @@ utils::globalVariables(c("MCNEG"))
 #'   of zero are assigned to class 1.
 #' @return An S3 object of class "svm_fs_meta" containing the input data,
 #'   predictor and response names, optimization settings, and a configured
-#'   \code{population} element. Call \code{run.svm_fs_meta()} to generate and
+#'   \code{population} element. Call \code{run()} to generate and
 #'   optimize its candidate solutions.
 #' @export
 #'
@@ -315,7 +315,7 @@ svm_fs_meta <- function(data, inputs, output, pop_size, num_fea,
 #' )
 #' obj <- svm_fs_meta(data, inputs = c("x1", "x2"), output = "y",
 #'                   pop_size = 4, num_fea = 2, n_iter = 1)
-#' res <- run.svm_fs_meta(obj)
+#' res <- run(obj)
 #' front <- res$population$df_solutions
 #' front <- front[front$FRONT == 1, , drop = FALSE]
 #' front_solutions <- Filter(function(s) s$front == 1,
@@ -392,8 +392,8 @@ run.svm_fs_meta <- function(object, ...) {
 #' )
 #' obj <- svm_fs_meta(data, inputs = c("x1", "x2"), output = "y",
 #'                   pop_size = 4, num_fea = 2, n_iter = 1)
-#' res <- run.svm_fs_meta(obj)
-#' draw_solution(res)
+#' res <- run(obj)
+#' plot(res)
 draw_solution <- function(x, ...) {
   if (is.null(x$population$df_solutions)) {
     message("No solutions to plot.")
@@ -458,7 +458,7 @@ draw_solution <- function(x, ...) {
 #' )
 #' obj <- svm_fs_meta(data, inputs = c("x1", "x2"), output = "y",
 #'                   pop_size = 4, num_fea = 2, n_iter = 1)
-#' res <- run.svm_fs_meta(obj)
+#' res <- run(obj)
 #' temp_dir <- tempdir()
 #' save_results(res, output_dir = temp_dir, dataset_name = "test")
 save_results <- function(object, output_dir, dataset_name = "dataset") {
