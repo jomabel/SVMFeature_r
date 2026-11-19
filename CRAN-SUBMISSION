@@ -1,73 +1,57 @@
 This is the initial submission of svmfsmeta (version 0.1.0) to CRAN.
 
-Validation status: the current S3 interface and mutation-cache changes passed
-local installed-package checks with R 4.5.1 on Windows 11 (build 26200):
-- R CMD check --as-cran --no-manual: 0 ERRORs | 0 WARNINGs | 0 NOTEs.
-- CRAN incoming remote checks and system-clock checks were disabled locally.
-- Unit tests: 1,365 passing expectations, with no failures, warnings or skips.
-- Examples and vignette rebuilding passed. All README usage blocks also ran
-  successfully against the installed package.
-- Documentation regeneration with roxygen2 7.3.3 is idempotent.
-- Archive and logs: results/cran/s3-local/windows-r-4.5.1-23860/.
-
-The cross-platform results below describe the earlier archive identified by
-its SHA256. Full Linux/Windows checks, including manuals, with current R and
-R-devel must be refreshed for the modified source before submission.
-
-The package implements multiobjective SVM feature selection using NSGA-II,
-with classification metrics, prediction, held-out evaluation, visualization,
-and CSV export.
-
-Previous cross-platform source validation:
-- Check date: 2026-11-18
-- Source commit: b4a7aabc04d9e337a3772a54dd801b642a325b1f
-- Linux build branch: codex/linux-cran-check
-- Windows check branch: codex/windows-cran-check
-- Linux workflow: https://github.com/jomabel/SVMFeature_r/actions/runs/44288234919
-- Windows workflow: https://github.com/jomabel/SVMFeature_r/actions/runs/44292921729
-- Windows workflow commit: 9089a49c1568bb1cdec860db51894b9aee27eba7
+Final source validation (2026-11-19):
+- Source commit: 84b432cfa51f97bc76a7d2b3260f3e393d013e1a
+- Includes the S3 interface, mutation-cache fixes and unified S3 documentation.
+- Validation branch: codex/cran-final-84b432c
 - Source archive: svmfsmeta_0.1.0.tar.gz
-- SHA256: 0b41012dcfe7fb971639e266640894918b93db22484caddda316a50749846717
+- SHA256: 1f94eea8b5e491353405526328e45e8bd36873b0634ac8b9d3c4eb5a6250d7ea
+- Linux: https://github.com/jomabel/SVMFeature_r/actions/runs/44520694816
+- Windows: https://github.com/jomabel/SVMFeature_r/actions/runs/44522737861
 
-Linux test environments:
-- Ubuntu 26.04.1 LTS, x86_64-pc-linux-gnu
-- R 4.6.2 (2026-10-29)
-- R-devel: R 4.7.0 Under development (2026-11-17 r90926)
-- Separate GitHub Actions jobs and package libraries for each R version.
+The same Linux-built source archive was checked in all four environments.
+Windows verified its SHA256 before checking it. Each environment used a
+separate job and R package library.
 
-Windows test environments:
-- Windows x64 runner, build 26100, x86_64-w64-mingw32
-- R reports the operating system as Windows Server 2022 x64.
-- R 4.6.2 (2026-10-29 ucrt)
-- R-devel: R 4.7.0 Under development (2026-11-17 r90926 ucrt)
-- Separate GitHub Actions jobs and package libraries for each R version.
-- Both jobs downloaded the Linux source archive and verified its SHA256 before
-  checking that exact file.
+Test environments and results:
+- Ubuntu 26.04.1 LTS, x86_64-pc-linux-gnu, R 4.6.2 (2026-10-29):
+  0 ERRORs | 0 WARNINGs | 1 NOTE.
+- Ubuntu 26.04.1 LTS, x86_64-pc-linux-gnu, R-devel (2026-11-18 r90935):
+  0 ERRORs | 0 WARNINGs | 1 NOTE.
+- Windows Server 2022 x64 (build 26100), x86_64-w64-mingw32,
+  R 4.6.2 (2026-10-29 ucrt): 0 ERRORs | 0 WARNINGs | 1 NOTE.
+- Windows Server 2022 x64 (build 26100), x86_64-w64-mingw32,
+  R-devel (2026-11-17 r90926 ucrt): 0 ERRORs | 0 WARNINGs | 1 NOTE.
 
 Check command:
 R CMD check --as-cran svmfsmeta_0.1.0.tar.gz
 
-Results:
-Linux R 4.6.2: 0 ERRORs | 0 WARNINGs | 1 NOTE
-Linux R-devel: 0 ERRORs | 0 WARNINGs | 1 NOTE
-Windows R 4.6.2: 0 ERRORs | 0 WARNINGs | 1 NOTE
-Windows R-devel: 0 ERRORs | 0 WARNINGs | 1 NOTE
-
-The same source archive was checked on both platforms and both R versions.
-
-The only NOTE in all four checks is the initial submission:
+The only NOTE in each environment is:
 > checking CRAN incoming feasibility ... NOTE
 > New submission
 
 This corresponds to the first CRAN submission of the package.
 
-Examples, unit tests (1,307 passing expectations, with no failures, warnings,
-or skips in each of the four environments), and vignette checks and rebuilding
-completed successfully. Both the PDF reference manual and the HTML manual,
-including mathematical rendering, were checked successfully.
+All four checks included CRAN incoming remote checks, examples, unit tests,
+vignette rebuilding, and the PDF and HTML reference manuals. Each environment
+passed 1,365 test expectations, with no failures, warnings or skipped tests.
 
-The source archive and complete check results are available as workflow
-artifacts. Local copies are stored under results/cran/linux/44288234919/ and
-results/cran/windows/44292921729/.
+The first Linux R-devel attempt failed during R installation because Ubuntu
+repository downloads failed. No package checks ran in that failed job.
+Re-running only that job succeeded without changes to the source or workflow;
+the successful re-run checked the original source archive.
 
-NEWS.md contains a summary of the changes and features for version 0.1.0.
+The archive and complete check results are available as workflow artifacts.
+Local copies and a machine-readable validation summary are stored under:
+results/cran/final-84b432c/
+The original Linux infrastructure failure is retained in linux-attempt-1/.
+
+Additional local validation on Windows with R 4.5.1:
+- R CMD check --as-cran --no-manual completed with Status: OK (remote incoming
+  and system-clock checks disabled for this local run).
+- README workflow blocks, the Colon example and the vignette ran successfully.
+- Documentation regeneration with roxygen2 7.3.3 is idempotent.
+
+The package implements multiobjective SVM feature selection using NSGA-II,
+with classification metrics, prediction, held-out evaluation, visualization,
+and CSV export. NEWS.md describes the initial release.
